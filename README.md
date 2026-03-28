@@ -29,6 +29,7 @@ Current implementation includes:
 - Configurable web guardrails for direct website entry and untrusted favorites
 - Family contacts now support direct email, message, and call shortcuts with safe fallbacks
 - Top-bar weather now shows live conditions by configured 5-digit ZIP code
+- Bridge assistant now runs through a pluggable adapter (mock today, OpenClaw-ready later)
 
 ## Project Structure
 
@@ -125,5 +126,6 @@ Sample config update payload:
 ## Notes
 
 - OpenClaw is still not integrated; this phase uses a mock bridge response layer.
+- Assistant provider defaults to `mock` (optional env: `ASSISTANT_PROVIDER`).
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.

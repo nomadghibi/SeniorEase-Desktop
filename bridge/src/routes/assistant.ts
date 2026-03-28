@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { getConfig } from '../services/configStore.js';
-import { runMockAssistant } from '../services/mockAssistant.js';
+import { getAssistantAdapter } from '../services/assistantAdapter.js';
 
 const requestSchema = z.object({
   userId: z.string().min(1),
@@ -16,6 +16,7 @@ const requestSchema = z.object({
 });
 
 const assistantRouter = Router();
+const assistantAdapter = getAssistantAdapter();
 
 assistantRouter.post('/command', async (request, response, next) => {
   const parsed = requestSchema.safeParse(request.body);
@@ -31,7 +32,7 @@ assistantRouter.post('/command', async (request, response, next) => {
 
   try {
     const config = await getConfig();
-    const result = runMockAssistant(parsed.data, config);
+    const result = await assistantAdapter.execute(parsed.data, { config });
     response.json(result);
   } catch (error) {
     next(error);

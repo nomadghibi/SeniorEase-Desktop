@@ -37,6 +37,7 @@
 - Assistant command handling now uses configured support/family/favorites context for named calls and trusted site shortcuts.
 - Family screen now supports direct email/message/call actions using saved contact details.
 - Added bridge weather endpoint and top-bar weather display driven by configured ZIP code.
+- Added a pluggable assistant adapter layer so mock logic can be swapped for OpenClaw integration later.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
