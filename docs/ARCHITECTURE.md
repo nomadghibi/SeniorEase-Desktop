@@ -24,6 +24,7 @@
 - Replaced email placeholder with guided inbox/read/reply flow including suspicious-email warning states.
 - Family contact actions now route into core modules and respect module visibility policies.
 - Assistant command responses now also respect module visibility policy from config.
+- Replaced photos placeholder with album browsing, slideshow state, and guided share actions.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
