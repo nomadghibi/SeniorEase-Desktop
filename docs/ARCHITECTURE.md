@@ -1,47 +1,39 @@
-# Architecture
+# Architecture (Residential-First)
 
-## Phase 1
-- Electron shell hosts a React/TypeScript renderer.
-- Renderer uses local state (Zustand) for module routing and navigation history.
-- Preload exposes a minimal safe API for non-sensitive UI hints.
+## System Layers
+1. `app/` Electron + React desktop launcher (senior-visible UX)
+2. `bridge/` local Node/Express policy + assistant orchestration layer
+3. Assistant backend through adapter (`mock` now, OpenClaw later)
+4. Windows/web app handoff for email, browser, video, family actions
 
-## Phase 2 (Current)
-- Added local Node/Express bridge service in `bridge/`.
-- Added `POST /assistant/command` API with typed structured responses.
-- Added `GET /config` and `POST /config` APIs backed by local JSON storage.
-- Added `POST /config/reset` for restoring safe default configuration.
-- Added `POST /admin/verify-pin` so PIN checks happen server-side.
-- Added `POST /support/request` and `GET /support/logs` for support escalation tracking.
-- Added `POST /support/logs/:id/close` for admin ticket lifecycle control.
-- Help screen now uses bridge responses and risk-level UI banners.
-- Help screen now submits support requests and displays recent support tickets.
-- Family and Internet screens now load contacts/favorites from bridge configuration.
-- Reminder count in the launcher header now reflects bridge configuration data.
-- Added an Admin Settings UI that updates the shared config via bridge APIs.
-- Added module visibility policy controls and strict safety-mode assistant behavior.
-- Settings now includes a support activity panel for closing open tickets.
-- Added a config-driven admin PIN gate for opening Settings.
-- Config API now returns `adminPinConfigured` only; PIN values are hashed at rest and never returned.
-- Added a global safety-mode banner and strict-mode blocking for direct unknown web entry.
-- Replaced email placeholder with guided inbox/read/reply flow including suspicious-email warning states.
-- Family contact actions now route into core modules and respect module visibility policies.
-- Assistant command responses now also respect module visibility policy from config.
-- Replaced photos placeholder with album browsing, slideshow state, and guided share actions.
-- Replaced video call placeholder with family call shortcuts, saved meeting links, and guarded launch actions.
-- Replaced Facebook placeholder with guided shortcuts and suspicious-content escalation prompts.
-- Expanded assistant mock command coverage across all primary modules.
-- Added optional voice input path in Help using browser speech recognition APIs.
-- Migrated browser favorites config from plain labels to structured entries (label/url/trusted).
-- Added interactive reminder actions on Home that persist through bridge config updates.
-- Added configurable web guardrails for direct website entry and untrusted favorites.
-- Assistant command handling now uses configured support/family/favorites context for named calls and trusted site shortcuts.
-- Family screen now supports direct email/message/call actions using saved contact details.
-- Added bridge weather endpoint and top-bar weather display driven by configured ZIP code.
-- Added a pluggable assistant adapter layer so mock logic can be swapped for OpenClaw integration later.
-- Added assistant session memory in bridge for command follow-ups within the same `sessionId`.
-- Assistant behavior remains mocked and policy-limited.
+## Admin Model (Simplified)
+- Single local admin surface in Settings
+- PIN-gated admin access
+- One household config profile (favorites, contacts, reminders, safety)
+- Local export/import/reset for repeatable residential setup
 
-## Phase 3 (Planned)
-- Replace mock bridge assistant with OpenClaw adapter.
-- Enforce stronger policy checks and configurable guardrails.
-- Add support escalation workflows and richer action confirmations.
+## Revised Roadmap
+
+### Phase 1: Launcher Foundation (Complete)
+- Fullscreen launcher shell
+- Large tile home UX + sticky nav
+- Core module routing and senior-first visual system
+
+### Phase 2: Bridge + Guided Assistant (Complete)
+- Local bridge APIs for assistant/config/support/admin
+- Structured assistant responses with risk levels
+- Settings-driven policy controls and guardrails
+- Support escalation workflows
+- Configurable web safety + weather by ZIP
+- Pluggable assistant adapter boundary
+
+### Phase 3: Controlled OpenClaw Rollout (In Progress)
+- Keep bridge contract stable (`/assistant/command`)
+- Swap assistant execution from mock to OpenClaw adapter
+- Preserve policy checks and confirmation-based safety flows
+- Expand observability and deployment hardening
+
+## Current Technical Status
+- Assistant behavior currently uses mock adapter
+- Session memory is active in bridge per `sessionId`
+- OpenClaw remains staged for Phase 3 adapter implementation

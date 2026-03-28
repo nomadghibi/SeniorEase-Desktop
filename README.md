@@ -2,6 +2,18 @@
 
 SeniorEase Desktop is a senior-first Windows launcher built with Electron, React, TypeScript, and Tailwind CSS.
 
+## Residential-First Direction
+
+This project follows a residential-first product spec:
+- Home user and caregiver simplicity first
+- One local admin model (PIN + shared household config)
+- OpenClaw integration staged later behind adapter boundaries
+
+Roadmap and build packs:
+- PRD: `docs/PRD.md`
+- Build packs: `docs/BUILD_PACKS.md`
+- OpenClaw staging: `docs/OPENCLAW_INTEGRATION.md`
+
 Current implementation includes:
 - Phase 1 launcher UI scaffold (fullscreen shell + large modules + sticky nav)
 - Phase 2 local bridge service scaffold (Node/Express)

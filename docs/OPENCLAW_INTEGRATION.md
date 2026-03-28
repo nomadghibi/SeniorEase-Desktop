@@ -1,9 +1,20 @@
-# OpenClaw Integration Plan
+# OpenClaw Integration (Staged Later)
 
-OpenClaw integration is intentionally deferred until Phase 2+
+OpenClaw integration is intentionally deferred until after launcher and bridge contracts are stable.
 
-Planned integration approach:
-1. UI sends structured commands to local bridge service.
-2. Bridge applies policy checks and context shaping.
-3. Bridge calls OpenClaw runtime and returns constrained responses.
-4. UI presents actions with explicit confirmation for risky steps.
+## Integration Order
+1. Finish and stabilize launcher UX (Phase 1)
+2. Finish local bridge + structured mock assistant behavior (Phase 2)
+3. Add OpenClaw through the assistant adapter (Phase 3)
+
+## Rules
+- OpenClaw is not the visible desktop shell
+- Bridge remains the policy and safety control point
+- Risky actions always require user confirmation
+- Support escalation path must remain available
+- If OpenClaw is unavailable, fall back to safe mock responses
+
+## Adapter Strategy
+- Keep `/assistant/command` contract stable
+- Swap execution backend from mock -> OpenClaw adapter
+- Preserve structured output (`message`, `actions`, `riskLevel`)
