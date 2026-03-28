@@ -60,6 +60,7 @@ const SettingsScreen = () => {
   const [favorites, setFavorites] = useState<WebsiteFavorite[]>([]);
   const [contacts, setContacts] = useState<FamilyContact[]>([]);
   const [supportContactName, setSupportContactName] = useState('');
+  const [weatherZipCode, setWeatherZipCode] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
   const [webGuardrails, setWebGuardrails] = useState<AppConfig['webGuardrails']>(
     config.webGuardrails
@@ -78,6 +79,7 @@ const SettingsScreen = () => {
     setFavorites(config.internetFavorites.map((item) => ({ ...item })));
     setContacts(config.familyContacts.map((item) => ({ ...item })));
     setSupportContactName(config.supportContactName);
+    setWeatherZipCode(config.weatherZipCode);
     setSafetyMode(config.safetyMode);
     setWebGuardrails({ ...config.webGuardrails });
     setRequireAdminPin(config.requireAdminPin);
@@ -113,6 +115,11 @@ const SettingsScreen = () => {
       return;
     }
 
+    if (!/^\d{5}$/.test(weatherZipCode.trim())) {
+      setStatusMessage('Weather ZIP code must be 5 digits.');
+      return;
+    }
+
     const nextReminders = reminders
       .map((item) => ({
         id: item.id || createId('reminder'),
@@ -145,6 +152,7 @@ const SettingsScreen = () => {
       internetFavorites: nextFavorites,
       familyContacts: nextContacts,
       supportContactName: supportContactName.trim() || 'Support',
+      weatherZipCode: weatherZipCode.trim(),
       safetyMode,
       webGuardrails,
       requireAdminPin,
@@ -263,6 +271,9 @@ const SettingsScreen = () => {
     }
     if (typeof raw.supportContactName === 'string') {
       patch.supportContactName = raw.supportContactName;
+    }
+    if (typeof raw.weatherZipCode === 'string') {
+      patch.weatherZipCode = raw.weatherZipCode.trim();
     }
     if (raw.safetyMode === 'standard' || raw.safetyMode === 'strict') {
       patch.safetyMode = raw.safetyMode;
@@ -571,6 +582,23 @@ const SettingsScreen = () => {
                 <option value="standard">Standard</option>
                 <option value="strict">Strict</option>
               </select>
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Weather ZIP Code
+              </span>
+              <input
+                value={weatherZipCode}
+                onChange={(event) =>
+                  setWeatherZipCode(event.target.value.replace(/[^\d]/g, '').slice(0, 5))
+                }
+                inputMode="numeric"
+                placeholder="5-digit ZIP"
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              />
             </label>
           </div>
 

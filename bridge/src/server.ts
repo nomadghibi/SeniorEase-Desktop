@@ -4,6 +4,7 @@ import adminRouter from './routes/admin.js';
 import assistantRouter from './routes/assistant.js';
 import configRouter from './routes/config.js';
 import supportRouter from './routes/support.js';
+import weatherRouter from './routes/weather.js';
 
 const app = express();
 const port = Number(process.env.BRIDGE_PORT ?? 8787);
@@ -27,6 +28,7 @@ app.use('/assistant', assistantRouter);
 app.use('/config', configRouter);
 app.use('/admin', adminRouter);
 app.use('/support', supportRouter);
+app.use('/weather', weatherRouter);
 
 app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
   const message = error instanceof Error ? error.message : 'Unexpected bridge error.';

@@ -29,6 +29,7 @@ export type AppConfig = {
   internetFavorites: WebsiteFavorite[];
   familyContacts: FamilyContact[];
   supportContactName: string;
+  weatherZipCode: string;
   safetyMode: 'standard' | 'strict';
   webGuardrails: WebGuardrails;
   requireAdminPin: boolean;

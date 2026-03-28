@@ -43,6 +43,7 @@ const defaultConfig: AppConfig = {
     { id: 'michael', name: 'Michael', relation: 'Grandson' }
   ],
   supportContactName: 'Support',
+  weatherZipCode: '10001',
   safetyMode: 'standard',
   webGuardrails: {
     directWebsiteEntry: 'confirm',

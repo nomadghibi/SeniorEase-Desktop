@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import BottomNav from './BottomNav';
+import { fetchCurrentWeather } from '@/lib/weatherClient';
 import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
+import type { CurrentWeather } from '@/types/weather';
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -27,6 +29,10 @@ const AppShell = ({ children }: AppShellProps) => {
   const configError = useConfigStore((state) => state.errorMessage);
   const reminders = useConfigStore((state) => state.config.reminders);
   const safetyMode = useConfigStore((state) => state.config.safetyMode);
+  const weatherZipCode = useConfigStore((state) => state.config.weatherZipCode);
+  const [weather, setWeather] = useState<CurrentWeather | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -57,6 +63,53 @@ const AppShell = ({ children }: AppShellProps) => {
     [now]
   );
 
+  useEffect(() => {
+    let canceled = false;
+
+    const loadWeather = async () => {
+      if (!/^\d{5}$/.test(weatherZipCode)) {
+        if (!canceled) {
+          setWeather(null);
+          setWeatherError('Set weather ZIP code in Settings.');
+        }
+        return;
+      }
+
+      if (!canceled) {
+        setWeatherLoading(true);
+        setWeatherError(null);
+      }
+
+      try {
+        const current = await fetchCurrentWeather(weatherZipCode);
+
+        if (!canceled) {
+          setWeather(current);
+          setWeatherError(null);
+        }
+      } catch {
+        if (!canceled) {
+          setWeather(null);
+          setWeatherError('Weather unavailable right now.');
+        }
+      } finally {
+        if (!canceled) {
+          setWeatherLoading(false);
+        }
+      }
+    };
+
+    void loadWeather();
+    const interval = window.setInterval(() => {
+      void loadWeather();
+    }, 15 * 60 * 1000);
+
+    return () => {
+      canceled = true;
+      window.clearInterval(interval);
+    };
+  }, [weatherZipCode]);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[var(--bg-base)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(114,155,117,0.16),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(236,184,101,0.2),transparent_34%)]" />
@@ -72,6 +125,15 @@ const AppShell = ({ children }: AppShellProps) => {
               </div>
               <div className="grid gap-2 text-left sm:text-right">
                 <p className="text-3xl font-bold text-[var(--text-strong)] sm:text-4xl">{formattedTime}</p>
+                <p className="text-lg text-[var(--text-muted)] sm:text-xl">
+                  {weatherLoading
+                    ? 'Loading weather...'
+                    : weatherError
+                      ? weatherError
+                      : weather
+                        ? `${weather.city}, ${weather.state} (${weather.zip}) - ${weather.temperatureF}°F, ${weather.condition}`
+                        : 'Weather unavailable'}
+                </p>
                 <p className="text-lg text-[var(--text-muted)] sm:text-xl">
                   {reminderCount > 0
                     ? `${reminderCount} reminder${reminderCount > 1 ? 's' : ''} today`

@@ -139,6 +139,7 @@ const defaultStoredConfig: StoredAppConfig = {
     { id: 'fred', name: 'Fred', relation: 'Support Contact', phone: '(555) 010-3300' }
   ],
   supportContactName: 'Fred',
+  weatherZipCode: '10001',
   safetyMode: 'standard',
   webGuardrails: {
     directWebsiteEntry: 'confirm',
@@ -174,6 +175,7 @@ const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
     internetFavorites: stored.internetFavorites,
     familyContacts: stored.familyContacts,
     supportContactName: stored.supportContactName,
+    weatherZipCode: stored.weatherZipCode,
     safetyMode: stored.safetyMode,
     webGuardrails: stored.webGuardrails,
     requireAdminPin: stored.requireAdminPin,
@@ -231,6 +233,10 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
       typeof partial.supportContactName === 'string' && partial.supportContactName.trim().length > 0
         ? partial.supportContactName
         : defaultStoredConfig.supportContactName,
+    weatherZipCode:
+      typeof partial.weatherZipCode === 'string' && /^\d{5}$/.test(partial.weatherZipCode)
+        ? partial.weatherZipCode
+        : defaultStoredConfig.weatherZipCode,
     safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
     webGuardrails,
     requireAdminPin:

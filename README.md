@@ -28,6 +28,7 @@ Current implementation includes:
 - Home screen reminders are now interactive (snooze/mark-done) with config persistence
 - Configurable web guardrails for direct website entry and untrusted favorites
 - Family contacts now support direct email, message, and call shortcuts with safe fallbacks
+- Top-bar weather now shows live conditions by configured 5-digit ZIP code
 
 ## Project Structure
 
@@ -75,6 +76,7 @@ Endpoint:
 - `GET /config`
 - `POST /config`
 - `POST /config/reset`
+- `GET /weather/current?zip=10001`
 - `POST /admin/verify-pin`
 - `POST /support/request`
 - `GET /support/logs`
