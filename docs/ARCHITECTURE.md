@@ -25,6 +25,7 @@
 - Family contact actions now route into core modules and respect module visibility policies.
 - Assistant command responses now also respect module visibility policy from config.
 - Replaced photos placeholder with album browsing, slideshow state, and guided share actions.
+- Replaced video call placeholder with family call shortcuts, saved meeting links, and guarded launch actions.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

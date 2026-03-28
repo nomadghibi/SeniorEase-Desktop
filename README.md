@@ -20,6 +20,7 @@ Current implementation includes:
 - Family module quick actions now route to Email/Video Call/Photos with policy-aware guidance
 - Assistant now enforces module visibility policy when interpreting commands
 - Photos module upgraded with album views, slideshow controls, and share-to-family flow
+- Video Call module upgraded with family shortcuts, saved meetings, and confirmation prompts
 
 ## Project Structure
 
