@@ -21,6 +21,7 @@ Current implementation includes:
 - Assistant now enforces module visibility policy when interpreting commands
 - Photos module upgraded with album views, slideshow controls, and share-to-family flow
 - Video Call module upgraded with family shortcuts, saved meetings, and confirmation prompts
+- Facebook module upgraded with guided actions and suspicious-message safety prompts
 
 ## Project Structure
 
