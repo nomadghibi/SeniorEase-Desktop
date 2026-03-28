@@ -24,5 +24,11 @@ OpenClaw integration is intentionally deferred until after launcher and bridge c
 - `OPENCLAW_URL` required when `ASSISTANT_PROVIDER=openclaw`
 - `OPENCLAW_COMMAND_PATH` optional (default `/assistant/command`)
 - `OPENCLAW_TIMEOUT_MS` optional (default `7000`)
+- `OPENCLAW_MAX_FAILURES` optional (default `3`)
+- `OPENCLAW_COOLDOWN_MS` optional (default `120000`)
 
 If OpenClaw fails or is unreachable, bridge falls back to safe mock behavior.
+
+## Hardening Behavior
+- Consecutive OpenClaw failures trigger cooldown fallback to mock responses.
+- `/health` exposes `assistantRuntime` status, including cooldown and last error.

@@ -5,7 +5,10 @@ import assistantRouter from './routes/assistant.js';
 import configRouter from './routes/config.js';
 import supportRouter from './routes/support.js';
 import weatherRouter from './routes/weather.js';
-import { getAssistantProvider } from './services/assistantAdapter.js';
+import {
+  getAssistantProvider,
+  getAssistantRuntimeStatus
+} from './services/assistantAdapter.js';
 
 const app = express();
 const port = Number(process.env.BRIDGE_PORT ?? 8787);
@@ -22,7 +25,8 @@ app.get('/health', (_request, response) => {
   response.json({
     ok: true,
     service: 'seniorease-bridge',
-    assistantProvider: getAssistantProvider()
+    assistantProvider: getAssistantProvider(),
+    assistantRuntime: getAssistantRuntimeStatus()
   });
 });
 

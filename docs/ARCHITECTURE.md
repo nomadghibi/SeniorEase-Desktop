@@ -37,4 +37,5 @@
 - Assistant behavior currently uses mock adapter
 - Session memory is active in bridge per `sessionId`
 - OpenClaw adapter path is available via env toggle with mock fallback
+- OpenClaw path now includes failure cooldown and health runtime reporting for safer operations
 - OpenClaw remains staged for Phase 3 adapter implementation

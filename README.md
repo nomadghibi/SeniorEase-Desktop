@@ -144,5 +144,7 @@ Sample config update payload:
   - `OPENCLAW_URL` (required when provider is `openclaw`)
   - `OPENCLAW_COMMAND_PATH` (optional, default `/assistant/command`)
   - `OPENCLAW_TIMEOUT_MS` (optional, default `7000`)
+  - `OPENCLAW_MAX_FAILURES` (optional, default `3`)
+  - `OPENCLAW_COOLDOWN_MS` (optional, default `120000`)
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.
