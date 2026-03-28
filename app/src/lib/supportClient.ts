@@ -1,4 +1,5 @@
 import type {
+  CloseSupportLogResponse,
   SupportLogsResponse,
   SupportRequestPayload,
   SupportRequestResponse
@@ -43,4 +44,20 @@ export const fetchSupportLogs = async (
   }
 
   return (await response.json()) as SupportLogsResponse;
+};
+
+export const closeSupportLog = async (
+  id: string,
+  signal?: AbortSignal
+): Promise<CloseSupportLogResponse> => {
+  const response = await fetch(`${bridgeBaseUrl}/support/logs/${id}/close`, {
+    method: 'POST',
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error(`Close support log failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as CloseSupportLogResponse;
 };

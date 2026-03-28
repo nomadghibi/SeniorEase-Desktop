@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { getConfig } from '../services/configStore.js';
-import { createSupportLog, getSupportLogs } from '../services/supportLogStore.js';
+import {
+  closeSupportLog,
+  createSupportLog,
+  getSupportLogs
+} from '../services/supportLogStore.js';
 import { supportRequestSchema } from '../types/support.js';
 
 const supportRouter = Router();
@@ -41,6 +45,37 @@ supportRouter.get('/logs', async (request, response, next) => {
     response.json({
       success: true,
       logs
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.post('/logs/:id/close', async (request, response, next) => {
+  const id = request.params.id;
+
+  if (!id) {
+    response.status(400).json({
+      success: false,
+      message: 'Missing support log id.'
+    });
+    return;
+  }
+
+  try {
+    const updated = await closeSupportLog(id);
+
+    if (!updated) {
+      response.status(404).json({
+        success: false,
+        message: 'Support log was not found.'
+      });
+      return;
+    }
+
+    response.json({
+      success: true,
+      log: updated
     });
   } catch (error) {
     next(error);

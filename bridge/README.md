@@ -19,6 +19,7 @@ Default URL: `http://localhost:8787`
 - `POST /config`
 - `POST /support/request`
 - `GET /support/logs`
+- `POST /support/logs/:id/close`
 
 The bridge currently uses:
 - a mock assistant service designed for safe, typed responses

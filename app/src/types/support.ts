@@ -30,3 +30,8 @@ export type SupportLogsResponse = {
   success: true;
   logs: SupportLogEntry[];
 };
+
+export type CloseSupportLogResponse = {
+  success: true;
+  log: SupportLogEntry;
+};

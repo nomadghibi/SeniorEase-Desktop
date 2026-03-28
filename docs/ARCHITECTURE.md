@@ -10,12 +10,14 @@
 - Added `POST /assistant/command` API with typed structured responses.
 - Added `GET /config` and `POST /config` APIs backed by local JSON storage.
 - Added `POST /support/request` and `GET /support/logs` for support escalation tracking.
+- Added `POST /support/logs/:id/close` for admin ticket lifecycle control.
 - Help screen now uses bridge responses and risk-level UI banners.
 - Help screen now submits support requests and displays recent support tickets.
 - Family and Internet screens now load contacts/favorites from bridge configuration.
 - Reminder count in the launcher header now reflects bridge configuration data.
 - Added an Admin Settings UI that updates the shared config via bridge APIs.
 - Added module visibility policy controls and strict safety-mode assistant behavior.
+- Settings now includes a support activity panel for closing open tickets.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

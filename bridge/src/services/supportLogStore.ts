@@ -63,3 +63,25 @@ export const getSupportLogs = async (limit = 20): Promise<SupportLogEntry[]> => 
   const normalizedLimit = Math.max(1, Math.min(100, Number.isFinite(limit) ? limit : 20));
   return logs.slice(0, normalizedLimit);
 };
+
+export const closeSupportLog = async (
+  id: string
+): Promise<SupportLogEntry | null> => {
+  const logs = await readLogs();
+
+  const index = logs.findIndex((entry) => entry.id === id);
+
+  if (index < 0) {
+    return null;
+  }
+
+  const updated: SupportLogEntry = {
+    ...logs[index],
+    status: 'closed'
+  };
+
+  logs[index] = updated;
+  await writeLogs(logs);
+
+  return updated;
+};

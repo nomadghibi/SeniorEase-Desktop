@@ -11,6 +11,7 @@ Current implementation includes:
 - Admin Settings screen for editing and saving configuration data
 - Module visibility policy controls with locked Help/Settings
 - Support escalation API + recent support request logs in Help
+- Admin support ticket activity section with close-ticket action
 - Strict safety mode behavior that upgrades caution actions to blocked
 
 ## Project Structure
@@ -60,6 +61,7 @@ Endpoint:
 - `POST /config`
 - `POST /support/request`
 - `GET /support/logs`
+- `POST /support/logs/:id/close`
 
 Sample payload:
 

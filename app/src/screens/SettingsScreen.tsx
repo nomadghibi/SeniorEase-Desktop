@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import { closeSupportLog, fetchSupportLogs } from '@/lib/supportClient';
 import { useConfigStore } from '@/store/configStore';
 import type { AppConfig, FamilyContact, Reminder } from '@/types/config';
+import type { SupportLogEntry } from '@/types/support';
 
 const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -35,6 +37,9 @@ const SettingsScreen = () => {
   const [supportContactName, setSupportContactName] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
   const [allowedModules, setAllowedModules] = useState<AppConfig['allowedModules']>(config.allowedModules);
+  const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
+  const [supportLogsLoading, setSupportLogsLoading] = useState(false);
+  const [closingLogId, setClosingLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +50,22 @@ const SettingsScreen = () => {
     setSafetyMode(config.safetyMode);
     setAllowedModules({ ...config.allowedModules });
   }, [config]);
+
+  const refreshSupportLogs = async () => {
+    setSupportLogsLoading(true);
+    try {
+      const result = await fetchSupportLogs(10);
+      setSupportLogs(result.logs);
+    } catch {
+      setSupportLogs([]);
+    } finally {
+      setSupportLogsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshSupportLogs();
+  }, []);
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,6 +104,16 @@ const SettingsScreen = () => {
     });
 
     setStatusMessage(saved ? 'Settings saved.' : 'Could not save settings right now.');
+  };
+
+  const handleCloseSupportLog = async (id: string) => {
+    setClosingLogId(id);
+    try {
+      await closeSupportLog(id);
+      await refreshSupportLogs();
+    } finally {
+      setClosingLogId(null);
+    }
   };
 
   return (
@@ -343,6 +374,57 @@ const SettingsScreen = () => {
                   className="h-6 w-6 accent-[#2d5d42] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">
+              Support Activity
+            </h2>
+            <button
+              type="button"
+              onClick={() => {
+                void refreshSupportLogs();
+              }}
+              className="rounded-xl border-2 border-[var(--line-strong)] bg-white px-4 py-2 text-lg font-semibold text-[var(--text-strong)]"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {supportLogsLoading ? (
+            <p className="text-xl text-[var(--text-muted)] sm:text-2xl">Loading support activity...</p>
+          ) : null}
+
+          {!supportLogsLoading && supportLogs.length === 0 ? (
+            <p className="text-xl text-[var(--text-muted)] sm:text-2xl">No support tickets yet.</p>
+          ) : null}
+
+          <div className="space-y-3">
+            {supportLogs.map((log) => (
+              <article
+                key={log.id}
+                className="rounded-2xl border border-[var(--line-soft)] bg-white p-4"
+              >
+                <p className="text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">{log.reason}</p>
+                <p className="mt-1 text-lg text-[var(--text-muted)] sm:text-xl">
+                  {new Date(log.createdAt).toLocaleString()} • Risk: {log.riskLevel ?? 'safe'} • Status: {log.status}
+                </p>
+                {log.status === 'open' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCloseSupportLog(log.id);
+                    }}
+                    disabled={closingLogId === log.id}
+                    className="mt-3 rounded-xl border-2 border-[#2d5d42] bg-[#2d5d42] px-4 py-2 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {closingLogId === log.id ? 'Closing...' : 'Mark Closed'}
+                  </button>
+                ) : null}
+              </article>
             ))}
           </div>
         </section>
