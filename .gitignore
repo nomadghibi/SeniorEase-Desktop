@@ -1,0 +1,16 @@
+# Node / build artifacts
+node_modules/
+app/node_modules/
+app/dist/
+app/dist-electron/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

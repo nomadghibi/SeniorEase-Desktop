@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@500;700&display=swap');
+
+:root {
+  --font-ui: 'Atkinson Hyperlegible', 'Segoe UI', Tahoma, sans-serif;
+  --font-display: 'Lexend', 'Atkinson Hyperlegible', 'Segoe UI', Tahoma, sans-serif;
+
+  --bg-base: #edf3ea;
+  --bg-panel: #fbfdf9;
+  --bg-nav: #1f3b2c;
+
+  --text-strong: #112217;
+  --text-muted: #355540;
+  --text-inverse: #f7fbf6;
+
+  --line-soft: #d4e2d5;
+  --line-strong: #315740;
+
+  --focus-ring: #f6b73c;
+  --status-safe: #d5f4df;
+  --status-warn: #fff3cd;
+}
