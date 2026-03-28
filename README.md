@@ -7,12 +7,12 @@ SeniorEase Desktop is a senior-first Windows launcher built with Electron, React
 This project follows a residential-first product spec:
 - Home user and caregiver simplicity first
 - One local admin model (PIN + shared household config)
-- OpenClaw integration staged later behind adapter boundaries
+- AnythingLLM integration staged later behind adapter boundaries
 
 Roadmap and build packs:
 - PRD: `docs/PRD.md`
 - Build packs: `docs/BUILD_PACKS.md`
-- OpenClaw staging: `docs/OPENCLAW_INTEGRATION.md`
+- AnythingLLM staging: `docs/ANYTHINGLLM_INTEGRATION.md`
 
 Current implementation includes:
 - Phase 1 launcher UI scaffold (fullscreen shell + large modules + sticky nav)
@@ -41,7 +41,7 @@ Current implementation includes:
 - Configurable web guardrails for direct website entry and untrusted favorites
 - Family contacts now support direct email, message, and call shortcuts with safe fallbacks
 - Top-bar weather now shows live conditions by configured 5-digit ZIP code
-- Bridge assistant now runs through a pluggable adapter (mock today, OpenClaw-ready later)
+- Bridge assistant now runs through a pluggable adapter (mock today, AnythingLLM-ready later)
 - Assistant now keeps session memory per `sessionId` for follow-up commands like "open it" and "call them"
 
 ## Project Structure
@@ -138,13 +138,15 @@ Sample config update payload:
 
 ## Notes
 
-- OpenClaw is still not integrated; this phase uses a mock bridge response layer.
-- Assistant provider defaults to `mock` (set `ASSISTANT_PROVIDER=openclaw` to enable adapter path).
-- OpenClaw adapter env vars:
-  - `OPENCLAW_URL` (required when provider is `openclaw`)
-  - `OPENCLAW_COMMAND_PATH` (optional, default `/assistant/command`)
-  - `OPENCLAW_TIMEOUT_MS` (optional, default `7000`)
-  - `OPENCLAW_MAX_FAILURES` (optional, default `3`)
-  - `OPENCLAW_COOLDOWN_MS` (optional, default `120000`)
+- AnythingLLM is still not integrated live; this phase uses a mock bridge response layer.
+- Assistant provider defaults to `mock` (set `ASSISTANT_PROVIDER=anythingllm` to enable adapter path).
+- AnythingLLM adapter env vars:
+  - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
+  - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/assistant/command`)
+  - `ANYTHINGLLM_API_KEY` (optional)
+  - `ANYTHINGLLM_TIMEOUT_MS` (optional, default `7000`)
+  - `ANYTHINGLLM_MAX_FAILURES` (optional, default `3`)
+  - `ANYTHINGLLM_COOLDOWN_MS` (optional, default `120000`)
+- Legacy `OPENCLAW_*` env vars are still accepted as compatibility aliases.
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.

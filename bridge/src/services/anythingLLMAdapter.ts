@@ -6,13 +6,14 @@ import type {
 } from '../types/assistant.js';
 import type { AppConfig } from '../types/config.js';
 
-type OpenClawAdapterOptions = {
+type AnythingLLMAdapterOptions = {
   baseUrl: string;
   path: string;
   timeoutMs: number;
+  apiKey: string | null;
 };
 
-type OpenClawExecutionContext = {
+type AnythingLLMExecutionContext = {
   config: AppConfig;
 };
 
@@ -30,7 +31,7 @@ const responseSchema = z.object({
   actions: z.array(actionSchema).min(1)
 });
 
-const buildOpenClawPayload = (
+const buildAnythingLLMPayload = (
   request: AssistantCommandRequest,
   config: AppConfig
 ): Record<string, unknown> => {
@@ -62,40 +63,46 @@ const mapResponse = (raw: z.infer<typeof responseSchema>): AssistantCommandRespo
   };
 };
 
-export class OpenClawAdapter {
-  private readonly options: OpenClawAdapterOptions;
+export class AnythingLLMAdapter {
+  private readonly options: AnythingLLMAdapterOptions;
 
-  constructor(options: OpenClawAdapterOptions) {
+  constructor(options: AnythingLLMAdapterOptions) {
     this.options = options;
   }
 
   async execute(
     request: AssistantCommandRequest,
-    context: OpenClawExecutionContext
+    context: AnythingLLMExecutionContext
   ): Promise<AssistantExecutionResult> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs);
 
     try {
       const endpoint = normalizeUrl(this.options.baseUrl, this.options.path);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+
+      if (this.options.apiKey) {
+        headers.Authorization = `Bearer ${this.options.apiKey}`;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(buildOpenClawPayload(request, context.config)),
+        headers,
+        body: JSON.stringify(buildAnythingLLMPayload(request, context.config)),
         signal: controller.signal
       });
 
       if (!response.ok) {
-        throw new Error(`OpenClaw adapter request failed with status ${response.status}`);
+        throw new Error(`AnythingLLM adapter request failed with status ${response.status}`);
       }
 
       const payload = await response.json();
       const parsed = responseSchema.safeParse(payload);
 
       if (!parsed.success) {
-        throw new Error('OpenClaw adapter returned an invalid response shape.');
+        throw new Error('AnythingLLM adapter returned an invalid response shape.');
       }
 
       return {

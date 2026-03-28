@@ -5,21 +5,21 @@ import type {
 } from '../types/assistant.js';
 import type { AppConfig } from '../types/config.js';
 import { runMockAssistant } from './mockAssistant.js';
-import { OpenClawAdapter } from './openClawAdapter.js';
+import { AnythingLLMAdapter } from './anythingLLMAdapter.js';
 
 type AssistantExecutionContext = {
   config: AppConfig;
   session: AssistantSessionSnapshot | null;
 };
 
-export type AssistantProvider = 'mock' | 'openclaw';
-export type EffectiveAssistantProvider = 'mock' | 'openclaw';
+export type AssistantProvider = 'mock' | 'anythingllm';
+export type EffectiveAssistantProvider = 'mock' | 'anythingllm';
 
 export type AssistantRuntimeStatus = {
   configuredProvider: AssistantProvider;
   effectiveProvider: EffectiveAssistantProvider;
-  openClawConfigured: boolean;
-  openClawReady: boolean;
+  anythingLlmConfigured: boolean;
+  anythingLlmReady: boolean;
   consecutiveFailures: number;
   fallbackUntil: string | null;
   lastError: string | null;
@@ -35,7 +35,8 @@ export interface AssistantAdapter {
 }
 
 const normalizeProvider = (value: string | undefined): AssistantProvider => {
-  return value?.trim().toLowerCase() === 'openclaw' ? 'openclaw' : 'mock';
+  const normalized = value?.trim().toLowerCase();
+  return normalized === 'anythingllm' || normalized === 'openclaw' ? 'anythingllm' : 'mock';
 };
 
 const parseTimeoutMs = (value: string | undefined): number => {
@@ -50,7 +51,7 @@ const parsePositiveInteger = (value: string | undefined, fallback: number): numb
 
 class ResilientAssistantAdapter implements AssistantAdapter {
   private readonly configuredProvider: AssistantProvider;
-  private readonly openClawAdapter: OpenClawAdapter | null;
+  private readonly anythingLlmAdapter: AnythingLLMAdapter | null;
   private readonly maxFailures: number;
   private readonly cooldownMs: number;
   private consecutiveFailures = 0;
@@ -60,7 +61,7 @@ class ResilientAssistantAdapter implements AssistantAdapter {
 
   constructor(
     provider: AssistantProvider,
-    openClawAdapter: OpenClawAdapter | null,
+    anythingLlmAdapter: AnythingLLMAdapter | null,
     options: {
       maxFailures: number;
       cooldownMs: number;
@@ -68,7 +69,7 @@ class ResilientAssistantAdapter implements AssistantAdapter {
     }
   ) {
     this.configuredProvider = provider;
-    this.openClawAdapter = openClawAdapter;
+    this.anythingLlmAdapter = anythingLlmAdapter;
     this.maxFailures = options.maxFailures;
     this.cooldownMs = options.cooldownMs;
     this.lastError = options.initialError ?? null;
@@ -87,10 +88,10 @@ class ResilientAssistantAdapter implements AssistantAdapter {
     return {
       configuredProvider: this.configuredProvider,
       effectiveProvider: this.effectiveProvider,
-      openClawConfigured: this.configuredProvider === 'openclaw',
-      openClawReady:
-        this.configuredProvider === 'openclaw' &&
-        this.openClawAdapter !== null &&
+      anythingLlmConfigured: this.configuredProvider === 'anythingllm',
+      anythingLlmReady:
+        this.configuredProvider === 'anythingllm' &&
+        this.anythingLlmAdapter !== null &&
         fallbackUntil === null,
       consecutiveFailures: this.consecutiveFailures,
       fallbackUntil,
@@ -105,32 +106,32 @@ class ResilientAssistantAdapter implements AssistantAdapter {
     const now = Date.now();
     const inCooldown = this.fallbackUntilEpoch > now;
 
-    if (this.configuredProvider === 'openclaw' && this.openClawAdapter && !inCooldown) {
+    if (this.configuredProvider === 'anythingllm' && this.anythingLlmAdapter && !inCooldown) {
       try {
-        const result = await this.openClawAdapter.execute(request, { config: context.config });
-        this.effectiveProvider = 'openclaw';
+        const result = await this.anythingLlmAdapter.execute(request, { config: context.config });
+        this.effectiveProvider = 'anythingllm';
         this.consecutiveFailures = 0;
         this.fallbackUntilEpoch = 0;
         this.lastError = null;
         return result;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown OpenClaw adapter error';
+        const message = error instanceof Error ? error.message : 'Unknown AnythingLLM adapter error';
         this.lastError = message;
         this.consecutiveFailures += 1;
 
         if (this.consecutiveFailures >= this.maxFailures) {
           this.fallbackUntilEpoch = Date.now() + this.cooldownMs;
           console.warn(
-            `[assistant] OpenClaw adapter entered cooldown for ${this.cooldownMs}ms after ${this.consecutiveFailures} failures.`
+            `[assistant] AnythingLLM adapter entered cooldown for ${this.cooldownMs}ms after ${this.consecutiveFailures} failures.`
           );
         } else {
           console.warn(
-            `[assistant] OpenClaw adapter failed (${this.consecutiveFailures}/${this.maxFailures}), using mock fallback: ${message}`
+            `[assistant] AnythingLLM adapter failed (${this.consecutiveFailures}/${this.maxFailures}), using mock fallback: ${message}`
           );
         }
       }
-    } else if (this.configuredProvider === 'openclaw' && !this.openClawAdapter) {
-      this.lastError = this.lastError ?? 'OpenClaw URL is missing.';
+    } else if (this.configuredProvider === 'anythingllm' && !this.anythingLlmAdapter) {
+      this.lastError = this.lastError ?? 'AnythingLLM URL is missing.';
     }
 
     this.effectiveProvider = 'mock';
@@ -140,29 +141,41 @@ class ResilientAssistantAdapter implements AssistantAdapter {
 
 const createAssistantAdapter = (): AssistantAdapter => {
   const provider = normalizeProvider(process.env.ASSISTANT_PROVIDER);
-  const maxFailures = parsePositiveInteger(process.env.OPENCLAW_MAX_FAILURES, 3);
-  const cooldownMs = parsePositiveInteger(process.env.OPENCLAW_COOLDOWN_MS, 120000);
+  const maxFailures = parsePositiveInteger(
+    process.env.ANYTHINGLLM_MAX_FAILURES ?? process.env.OPENCLAW_MAX_FAILURES,
+    3
+  );
+  const cooldownMs = parsePositiveInteger(
+    process.env.ANYTHINGLLM_COOLDOWN_MS ?? process.env.OPENCLAW_COOLDOWN_MS,
+    120000
+  );
 
-  if (provider === 'openclaw') {
-    const baseUrl = process.env.OPENCLAW_URL?.trim();
+  if (provider === 'anythingllm') {
+    const baseUrl = (process.env.ANYTHINGLLM_URL ?? process.env.OPENCLAW_URL)?.trim();
 
     if (!baseUrl) {
-      console.warn('[assistant] ASSISTANT_PROVIDER=openclaw but OPENCLAW_URL is missing. Using mock.');
-      return new ResilientAssistantAdapter('openclaw', null, {
+      console.warn(
+        '[assistant] ASSISTANT_PROVIDER=anythingllm but ANYTHINGLLM_URL is missing. Using mock.'
+      );
+      return new ResilientAssistantAdapter('anythingllm', null, {
         maxFailures,
         cooldownMs,
-        initialError: 'OPENCLAW_URL missing'
+        initialError: 'ANYTHINGLLM_URL missing'
       });
     }
 
-    const path = process.env.OPENCLAW_COMMAND_PATH?.trim() || '/assistant/command';
-    const timeoutMs = parseTimeoutMs(process.env.OPENCLAW_TIMEOUT_MS);
-    const openClawAdapter = new OpenClawAdapter({
+    const path =
+      (process.env.ANYTHINGLLM_COMMAND_PATH ?? process.env.OPENCLAW_COMMAND_PATH)?.trim() ||
+      '/assistant/command';
+    const timeoutMs = parseTimeoutMs(process.env.ANYTHINGLLM_TIMEOUT_MS ?? process.env.OPENCLAW_TIMEOUT_MS);
+    const apiKey = (process.env.ANYTHINGLLM_API_KEY ?? process.env.OPENCLAW_API_KEY)?.trim() || null;
+    const anythingLlmAdapter = new AnythingLLMAdapter({
       baseUrl,
       path,
-      timeoutMs
+      timeoutMs,
+      apiKey
     });
-    return new ResilientAssistantAdapter('openclaw', openClawAdapter, {
+    return new ResilientAssistantAdapter('anythingllm', anythingLlmAdapter, {
       maxFailures,
       cooldownMs
     });

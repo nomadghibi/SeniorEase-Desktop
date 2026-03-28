@@ -62,9 +62,15 @@ Out of scope in this model:
 - Safe mocked assistant behavior (no unrestricted automation)
 - Config + support workflows for residential support
 
-### Phase 3: Controlled OpenClaw Rollout (Build Pack 3)
+### Phase 3: Family, Reminders, and Safety Expansion (Build Pack 3)
+- Expand family contact shortcuts and guided family workflows
+- Add reminder interactions and stronger household safety defaults
+- Keep bridge policy enforcement and risk banners consistent
+- Continue reducing support friction for residential installs
+
+### Phase 4: Controlled AnythingLLM Rollout (Build Pack 4)
 - Keep existing UI/bridge contract
-- Add OpenClaw adapter behind the assistant interface
+- Add AnythingLLM adapter behind the assistant interface
 - Keep confirmation gates for risky actions
 - Preserve support escalation and safety guardrails
 - Expand policy/hardening without removing residential simplicity
@@ -72,7 +78,8 @@ Out of scope in this model:
 ## 8. Current Delivery Status (Codebase Snapshot)
 - Phase 1: complete
 - Phase 2: complete
-- Phase 3: started (adapter/session foundation in place; OpenClaw still staged later)
+- Phase 3: in progress (family/reminders/safety hardening underway)
+- Phase 4: staged later (AnythingLLM adapter path prepared with mock fallback)
 
 ## 9. Success Metrics
 - Fewer “I got stuck” support calls
@@ -84,6 +91,7 @@ Out of scope in this model:
 Use the Build Packs in order:
 1. Build Pack 1 baseline (launcher/UI scaffold)
 2. Build Pack 2 bridge + structured assistant layer
-3. Build Pack 3 controlled OpenClaw integration
+3. Build Pack 3 family/reminders/safety expansion
+4. Build Pack 4 controlled AnythingLLM integration
 
-OpenClaw should be integrated **after** the UI and bridge contracts are stable.
+AnythingLLM should be integrated **after** the UI and bridge contracts are stable.

@@ -18,7 +18,7 @@ Generate the actual Electron + React senior launcher scaffold with accessible ho
 ### Safety Constraints
 - No autonomous high-risk actions
 - No backend automation complexity
-- No OpenClaw integration yet
+- No AnythingLLM integration yet
 
 ### Deliverables
 - Working local launcher app
@@ -42,7 +42,7 @@ Requirements:
 
 Constraints:
 - No backend complexity
-- No OpenClaw integration in this pack
+- No AnythingLLM integration in this pack
 - No autonomous risky actions
 
 Output:
@@ -82,23 +82,61 @@ Requirements:
 - Add Help UI that sends commands and renders structured responses
 - Add risk-level support: safe/caution/blocked
 - Add support escalation action path
-- Keep adapter boundaries for future OpenClaw integration
+- Keep adapter boundaries for future AnythingLLM integration
 
 Constraints:
-- Do not integrate real OpenClaw yet
+- Do not integrate live AnythingLLM yet
 - Do not allow unrestricted command execution
 ```
 
-## Build Pack 3: Controlled OpenClaw Integration (Later Stage)
+## Build Pack 3: Family, Reminders, and Safety Expansion
 
 ### Goal
-Swap mock assistant execution with OpenClaw via adapter without changing senior-facing UX patterns.
+Expand practical household workflows and safety behaviors while preserving the existing bridge contract.
 
 ### Scope
-- Implement OpenClaw adapter behind assistant interface
+- Family contact cards and guided shortcuts
+- Reminder interactions on Home and persistence
+- Stronger internet/email safety guardrails
+- Support and admin quality-of-life enhancements
+- Maintain assistant response structure and risk gating
+
+### Safety Constraints
+- No silent risky actions
+- Maintain human-in-the-loop confirmation flows
+- Keep strict policy enforcement in bridge
+
+### Deliverables
+- Family/reminder/safety feature set integrated with current modules
+- Hardened policy behavior with clear user messaging
+- Stable contract for later live assistant runtime swap
+
+### Build Prompt
+```md
+Extend SeniorEase Desktop with family, reminder, and safety improvements.
+
+Requirements:
+- Add family contact shortcut improvements
+- Add reminder action controls and persistence
+- Expand web/email safety guardrails and confirmation UX
+- Keep assistant responses structured (safe/caution/blocked)
+- Keep support escalation and admin workflows stable
+
+Constraints:
+- Do not bypass safety checks
+- Do not add autonomous high-risk behavior
+```
+
+## Build Pack 4: Controlled AnythingLLM Integration (Later Stage)
+
+### Goal
+Swap mock assistant execution with AnythingLLM via adapter without changing senior-facing UX patterns.
+
+### Scope
+- Implement AnythingLLM adapter behind assistant interface
 - Preserve existing bridge API contract
 - Keep policy checks and confirmation gates
-- Add logging/observability for support diagnostics
+- Add runtime health and fallback telemetry for support diagnostics
 
 ### Safety Constraints
 - No silent risky actions
@@ -107,18 +145,18 @@ Swap mock assistant execution with OpenClaw via adapter without changing senior-
 
 ### Deliverables
 - Adapter-backed assistant execution
-- Safe fallback behavior if OpenClaw unavailable
+- Safe fallback behavior if AnythingLLM is unavailable
 - Documented deployment toggles and rollback path
 
 ### Build Prompt
 ```md
-Integrate OpenClaw into SeniorEase Desktop using the existing assistant adapter contract.
+Integrate AnythingLLM into SeniorEase Desktop using the existing assistant adapter contract.
 
 Requirements:
-- Implement OpenClaw adapter for assistant execution
+- Implement AnythingLLM adapter for assistant execution
 - Keep existing bridge route contracts stable
 - Preserve risk-level behavior and confirmation gates
-- Add robust fallback to mock/safe responses when OpenClaw is unavailable
+- Add robust fallback to mock/safe responses when AnythingLLM is unavailable
 - Keep support escalation intact
 
 Constraints:
