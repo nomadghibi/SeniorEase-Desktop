@@ -35,6 +35,7 @@
 - Added interactive reminder actions on Home that persist through bridge config updates.
 - Added configurable web guardrails for direct website entry and untrusted favorites.
 - Assistant command handling now uses configured support/family/favorites context for named calls and trusted site shortcuts.
+- Family screen now supports direct email/message/call actions using saved contact details.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

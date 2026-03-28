@@ -4,9 +4,14 @@ import { useUiStore } from '@/store/uiStore';
 import type { ScreenId } from '@/lib/modules';
 import { useState } from 'react';
 
+const toDialablePhone = (value: string): string => {
+  return value.replace(/[^\d+]/g, '');
+};
+
 const FamilyScreen = () => {
   const contacts = useConfigStore((state) => state.config.familyContacts);
   const allowedModules = useConfigStore((state) => state.config.allowedModules);
+  const supportContactName = useConfigStore((state) => state.config.supportContactName);
   const goTo = useUiStore((state) => state.goTo);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -29,6 +34,90 @@ const FamilyScreen = () => {
     }
 
     setActionMessage(`Opening Photos so you can share with ${contactName}.`);
+  };
+
+  const emailContact = (contact: (typeof contacts)[number]) => {
+    if (contact.email?.trim()) {
+      const approved = window.confirm(`Open an email draft to ${contact.name}?`);
+
+      if (!approved) {
+        setActionMessage('Canceled email draft.');
+        return;
+      }
+
+      const subject = encodeURIComponent(`Hello ${contact.name}`);
+      window.open(`mailto:${contact.email}?subject=${subject}`, '_self');
+      setActionMessage(`Prepared an email draft for ${contact.name}.`);
+      return;
+    }
+
+    openModuleForContact('email', contact.name);
+  };
+
+  const callContact = (contact: (typeof contacts)[number]) => {
+    if (contact.phone?.trim()) {
+      const approved = window.confirm(`Call ${contact.name} at ${contact.phone}?`);
+
+      if (!approved) {
+        setActionMessage('Canceled call.');
+        return;
+      }
+
+      const dialable = toDialablePhone(contact.phone);
+
+      if (!dialable) {
+        setActionMessage(`Could not use this phone number for ${contact.name}.`);
+        return;
+      }
+
+      window.open(`tel:${dialable}`, '_self');
+      setActionMessage(`Calling ${contact.name}.`);
+      return;
+    }
+
+    openModuleForContact('videocall', contact.name);
+  };
+
+  const messageContact = (contact: (typeof contacts)[number]) => {
+    if (contact.phone?.trim()) {
+      const approved = window.confirm(`Open a text message to ${contact.name}?`);
+
+      if (!approved) {
+        setActionMessage('Canceled message.');
+        return;
+      }
+
+      const dialable = toDialablePhone(contact.phone);
+
+      if (!dialable) {
+        setActionMessage(`Could not use this phone number for ${contact.name}.`);
+        return;
+      }
+
+      window.open(`sms:${dialable}`, '_self');
+      setActionMessage(`Prepared a text message to ${contact.name}.`);
+      return;
+    }
+
+    if (contact.email?.trim()) {
+      const approved = window.confirm(
+        `${contact.name} has no mobile number saved. Send an email message instead?`
+      );
+
+      if (!approved) {
+        setActionMessage('Canceled message.');
+        return;
+      }
+
+      const subject = encodeURIComponent(`Quick message for ${contact.name}`);
+      window.open(`mailto:${contact.email}?subject=${subject}`, '_self');
+      setActionMessage(`Prepared an email message for ${contact.name}.`);
+      return;
+    }
+
+    setActionMessage(
+      `No phone or email saved for ${contact.name}. Update contact info in Settings or call ${supportContactName}.`
+    );
   };
 
   return (
@@ -59,17 +148,30 @@ const FamilyScreen = () => {
           >
             <p className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">{contact.name}</p>
             <p className="mt-2 text-lg text-[var(--text-muted)] sm:text-xl">{contact.relation}</p>
+            {contact.phone ? (
+              <p className="mt-1 text-base text-[var(--text-muted)] sm:text-lg">Phone: {contact.phone}</p>
+            ) : null}
+            {contact.email ? (
+              <p className="text-base text-[var(--text-muted)] sm:text-lg">Email: {contact.email}</p>
+            ) : null}
             <div className="mt-4 grid gap-2">
               <button
                 type="button"
-                onClick={() => openModuleForContact('email', contact.name)}
+                onClick={() => emailContact(contact)}
                 className="rounded-xl border-2 border-[var(--line-soft)] bg-white px-4 py-3 text-left text-xl font-semibold text-[var(--text-strong)]"
               >
                 Send Email
               </button>
               <button
                 type="button"
-                onClick={() => openModuleForContact('videocall', contact.name)}
+                onClick={() => messageContact(contact)}
+                className="rounded-xl border-2 border-[var(--line-soft)] bg-white px-4 py-3 text-left text-xl font-semibold text-[var(--text-strong)]"
+              >
+                Send Message
+              </button>
+              <button
+                type="button"
+                onClick={() => callContact(contact)}
                 className="rounded-xl border-2 border-[var(--line-soft)] bg-white px-4 py-3 text-left text-xl font-semibold text-[var(--text-strong)]"
               >
                 Start Call

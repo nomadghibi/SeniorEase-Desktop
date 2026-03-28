@@ -27,6 +27,7 @@ Current implementation includes:
 - Internet favorites now use label + URL + trusted flags with stricter open-site safety checks
 - Home screen reminders are now interactive (snooze/mark-done) with config persistence
 - Configurable web guardrails for direct website entry and untrusted favorites
+- Family contacts now support direct email, message, and call shortcuts with safe fallbacks
 
 ## Project Structure
 
