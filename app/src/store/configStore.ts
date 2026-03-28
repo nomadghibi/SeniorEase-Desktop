@@ -50,7 +50,7 @@ const defaultConfig: AppConfig = {
     untrustedFavorite: 'confirm'
   },
   assistantSettings: {
-    anythingLlmUrl: '',
+    anythingLlmUrl: 'http://localhost:3001',
     anythingLlmCommandPath: '/api/v1/workspace/default/chat',
     anythingLlmApiKey: ''
   },
