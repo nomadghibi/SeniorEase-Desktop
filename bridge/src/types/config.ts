@@ -32,12 +32,18 @@ export const moduleVisibilitySchema = z.object({
   settings: z.boolean()
 });
 
+export const webGuardrailsSchema = z.object({
+  directWebsiteEntry: z.enum(['confirm', 'block']),
+  untrustedFavorite: z.enum(['confirm', 'block'])
+});
+
 export const storedAppConfigSchema = z.object({
   reminders: z.array(reminderSchema),
   internetFavorites: z.array(websiteFavoriteSchema),
   familyContacts: z.array(familyContactSchema),
   supportContactName: z.string().min(1),
   safetyMode: z.enum(['standard', 'strict']),
+  webGuardrails: webGuardrailsSchema,
   requireAdminPin: z.boolean(),
   adminPinHash: z.string().min(32),
   allowedModules: moduleVisibilitySchema,
@@ -50,6 +56,7 @@ export const appConfigSchema = z.object({
   familyContacts: z.array(familyContactSchema),
   supportContactName: z.string().min(1),
   safetyMode: z.enum(['standard', 'strict']),
+  webGuardrails: webGuardrailsSchema,
   requireAdminPin: z.boolean(),
   adminPinConfigured: z.boolean(),
   allowedModules: moduleVisibilitySchema,
@@ -63,6 +70,7 @@ export const appConfigPatchSchema = z
     familyContacts: z.array(familyContactSchema).optional(),
     supportContactName: z.string().min(1).optional(),
     safetyMode: z.enum(['standard', 'strict']).optional(),
+    webGuardrails: webGuardrailsSchema.partial().optional(),
     requireAdminPin: z.boolean().optional(),
     adminPin: z.string().regex(/^\d{4,8}$/).optional(),
     allowedModules: moduleVisibilitySchema.partial().optional()

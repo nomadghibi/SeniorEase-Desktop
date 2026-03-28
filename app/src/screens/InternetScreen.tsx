@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useConfigStore } from '@/store/configStore';
 import type { WebsiteFavorite } from '@/types/config';
@@ -29,15 +29,56 @@ const getDomainLabel = (url: string): string => {
   }
 };
 
+const getGuardrailTip = (
+  safetyMode: 'standard' | 'strict',
+  directWebsiteEntry: 'confirm' | 'block',
+  untrustedFavorite: 'confirm' | 'block'
+): { tone: StatusTone; message: string } => {
+  if (safetyMode === 'strict') {
+    return {
+      tone: 'blocked',
+      message:
+        'Strict safety mode is on. Use trusted favorites and ask support for unfamiliar websites.'
+    };
+  }
+
+  if (directWebsiteEntry === 'block' || untrustedFavorite === 'block') {
+    return {
+      tone: 'caution',
+      message:
+        'Support guardrails are active. Some website actions are blocked until reviewed.'
+    };
+  }
+
+  return {
+    tone: 'caution',
+    message: 'Unknown websites can be risky. If unsure, tap Help first.'
+  };
+};
+
 const InternetScreen = () => {
   const favorites = useConfigStore((state) => state.config.internetFavorites);
   const safetyMode = useConfigStore((state) => state.config.safetyMode);
+  const webGuardrails = useConfigStore((state) => state.config.webGuardrails);
 
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
-    tone: 'caution',
-    message: 'Unknown websites can be risky. If unsure, tap Help first.'
-  });
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string }>(
+    getGuardrailTip(
+      safetyMode,
+      webGuardrails.directWebsiteEntry,
+      webGuardrails.untrustedFavorite
+    )
+  );
+
+  useEffect(() => {
+    setStatus(
+      getGuardrailTip(
+        safetyMode,
+        webGuardrails.directWebsiteEntry,
+        webGuardrails.untrustedFavorite
+      )
+    );
+  }, [safetyMode, webGuardrails.directWebsiteEntry, webGuardrails.untrustedFavorite]);
 
   const openSearch = (value: string) => {
     const url = `https://duckduckgo.com/?q=${encodeURIComponent(value)}`;
@@ -45,15 +86,21 @@ const InternetScreen = () => {
   };
 
   const openFavorite = (favorite: WebsiteFavorite) => {
-    if (!favorite.trusted && safetyMode === 'strict') {
+    const shouldBlockUntrustedFavorite =
+      safetyMode === 'strict' || webGuardrails.untrustedFavorite === 'block';
+
+    if (!favorite.trusted && shouldBlockUntrustedFavorite) {
       setStatus({
         tone: 'blocked',
-        message: `${favorite.label} is not marked trusted. Strict safety mode blocked opening this site.`
+        message:
+          safetyMode === 'strict'
+            ? `${favorite.label} is not marked trusted. Strict safety mode blocked opening this site.`
+            : `${favorite.label} is not marked trusted. Support guardrails blocked this website.`
       });
       return;
     }
 
-    if (!favorite.trusted && safetyMode === 'standard') {
+    if (!favorite.trusted) {
       const approved = window.confirm(
         `${favorite.label} is not marked trusted. Open it anyway?`
       );
@@ -85,11 +132,16 @@ const InternetScreen = () => {
 
     const looksLikeUrl = urlLikePattern.test(trimmed);
 
-    if (looksLikeUrl && safetyMode === 'strict') {
+    const shouldBlockDirectWebsiteEntry =
+      safetyMode === 'strict' || webGuardrails.directWebsiteEntry === 'block';
+
+    if (looksLikeUrl && shouldBlockDirectWebsiteEntry) {
       setStatus({
         tone: 'blocked',
         message:
-          'Strict safety mode blocked direct website entry. Use trusted favorites or ask for help.'
+          safetyMode === 'strict'
+            ? 'Strict safety mode blocked direct website entry. Use trusted favorites or ask for help.'
+            : 'Support guardrails blocked direct website entry. Use trusted favorites or ask for help.'
       });
       return;
     }

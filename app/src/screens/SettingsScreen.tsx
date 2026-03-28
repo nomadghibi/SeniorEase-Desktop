@@ -61,6 +61,9 @@ const SettingsScreen = () => {
   const [contacts, setContacts] = useState<FamilyContact[]>([]);
   const [supportContactName, setSupportContactName] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
+  const [webGuardrails, setWebGuardrails] = useState<AppConfig['webGuardrails']>(
+    config.webGuardrails
+  );
   const [requireAdminPin, setRequireAdminPin] = useState(true);
   const [newAdminPin, setNewAdminPin] = useState('');
   const [allowedModules, setAllowedModules] = useState<AppConfig['allowedModules']>(config.allowedModules);
@@ -76,6 +79,7 @@ const SettingsScreen = () => {
     setContacts(config.familyContacts.map((item) => ({ ...item })));
     setSupportContactName(config.supportContactName);
     setSafetyMode(config.safetyMode);
+    setWebGuardrails({ ...config.webGuardrails });
     setRequireAdminPin(config.requireAdminPin);
     setAllowedModules({ ...config.allowedModules });
   }, [config]);
@@ -142,6 +146,7 @@ const SettingsScreen = () => {
       familyContacts: nextContacts,
       supportContactName: supportContactName.trim() || 'Support',
       safetyMode,
+      webGuardrails,
       requireAdminPin,
       allowedModules: {
         ...allowedModules,
@@ -261,6 +266,9 @@ const SettingsScreen = () => {
     }
     if (raw.safetyMode === 'standard' || raw.safetyMode === 'strict') {
       patch.safetyMode = raw.safetyMode;
+    }
+    if (raw.webGuardrails && typeof raw.webGuardrails === 'object') {
+      patch.webGuardrails = raw.webGuardrails as AppConfigPatch['webGuardrails'];
     }
     if (typeof raw.requireAdminPin === 'boolean') {
       patch.requireAdminPin = raw.requireAdminPin;
@@ -562,6 +570,46 @@ const SettingsScreen = () => {
               >
                 <option value="standard">Standard</option>
                 <option value="strict">Strict</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Direct Website Entry
+              </span>
+              <select
+                value={webGuardrails.directWebsiteEntry}
+                onChange={(event) =>
+                  setWebGuardrails((current) => ({
+                    ...current,
+                    directWebsiteEntry: event.target.value as 'confirm' | 'block'
+                  }))
+                }
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              >
+                <option value="confirm">Ask Before Opening</option>
+                <option value="block">Block and Ask for Help</option>
+              </select>
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Untrusted Favorites
+              </span>
+              <select
+                value={webGuardrails.untrustedFavorite}
+                onChange={(event) =>
+                  setWebGuardrails((current) => ({
+                    ...current,
+                    untrustedFavorite: event.target.value as 'confirm' | 'block'
+                  }))
+                }
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              >
+                <option value="confirm">Ask Before Opening</option>
+                <option value="block">Block and Ask for Help</option>
               </select>
             </label>
           </div>

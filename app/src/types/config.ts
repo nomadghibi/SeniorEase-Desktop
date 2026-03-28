@@ -19,12 +19,18 @@ export type WebsiteFavorite = {
   trusted: boolean;
 };
 
+export type WebGuardrails = {
+  directWebsiteEntry: 'confirm' | 'block';
+  untrustedFavorite: 'confirm' | 'block';
+};
+
 export type AppConfig = {
   reminders: Reminder[];
   internetFavorites: WebsiteFavorite[];
   familyContacts: FamilyContact[];
   supportContactName: string;
   safetyMode: 'standard' | 'strict';
+  webGuardrails: WebGuardrails;
   requireAdminPin: boolean;
   adminPinConfigured: boolean;
   allowedModules: {
@@ -41,8 +47,9 @@ export type AppConfig = {
 };
 
 export type AppConfigPatch = Partial<
-  Omit<AppConfig, 'updatedAt' | 'allowedModules' | 'adminPinConfigured'>
+  Omit<AppConfig, 'updatedAt' | 'allowedModules' | 'adminPinConfigured' | 'webGuardrails'>
 > & {
   adminPin?: string;
   allowedModules?: Partial<AppConfig['allowedModules']>;
+  webGuardrails?: Partial<AppConfig['webGuardrails']>;
 };

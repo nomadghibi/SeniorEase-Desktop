@@ -44,6 +44,10 @@ const defaultConfig: AppConfig = {
   ],
   supportContactName: 'Support',
   safetyMode: 'standard',
+  webGuardrails: {
+    directWebsiteEntry: 'confirm',
+    untrustedFavorite: 'confirm'
+  },
   requireAdminPin: true,
   adminPinConfigured: true,
   allowedModules: {

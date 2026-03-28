@@ -33,6 +33,7 @@
 - Added optional voice input path in Help using browser speech recognition APIs.
 - Migrated browser favorites config from plain labels to structured entries (label/url/trusted).
 - Added interactive reminder actions on Home that persist through bridge config updates.
+- Added configurable web guardrails for direct website entry and untrusted favorites.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

@@ -26,6 +26,7 @@ Current implementation includes:
 - Help screen now supports optional voice command capture (browser speech API)
 - Internet favorites now use label + URL + trusted flags with stricter open-site safety checks
 - Home screen reminders are now interactive (snooze/mark-done) with config persistence
+- Configurable web guardrails for direct website entry and untrusted favorites
 
 ## Project Structure
 
@@ -104,6 +105,10 @@ Sample config update payload:
 {
   "internetFavorites": ["Church Website", "Local Weather", "Family Photos"],
   "safetyMode": "strict",
+  "webGuardrails": {
+    "directWebsiteEntry": "block",
+    "untrustedFavorite": "confirm"
+  },
   "requireAdminPin": true,
   "adminPin": "2468"
 }

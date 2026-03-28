@@ -140,6 +140,10 @@ const defaultStoredConfig: StoredAppConfig = {
   ],
   supportContactName: 'Fred',
   safetyMode: 'standard',
+  webGuardrails: {
+    directWebsiteEntry: 'confirm',
+    untrustedFavorite: 'confirm'
+  },
   requireAdminPin: true,
   adminPinHash: hashAdminPin('1234'),
   allowedModules: {
@@ -171,6 +175,7 @@ const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
     familyContacts: stored.familyContacts,
     supportContactName: stored.supportContactName,
     safetyMode: stored.safetyMode,
+    webGuardrails: stored.webGuardrails,
     requireAdminPin: stored.requireAdminPin,
     adminPinConfigured: stored.adminPinHash.length > 0,
     allowedModules: stored.allowedModules,
@@ -185,6 +190,7 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
 
   const partial = input as Partial<StoredAppConfig> & {
     allowedModules?: Partial<StoredAppConfig['allowedModules']>;
+    webGuardrails?: Partial<StoredAppConfig['webGuardrails']>;
     internetFavorites?: unknown[];
     adminPin?: unknown;
   };
@@ -205,6 +211,13 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
         ? hashAdminPin(partial.adminPin)
         : defaultStoredConfig.adminPinHash;
 
+  const webGuardrails: StoredAppConfig['webGuardrails'] = {
+    directWebsiteEntry:
+      partial.webGuardrails?.directWebsiteEntry === 'block' ? 'block' : 'confirm',
+    untrustedFavorite:
+      partial.webGuardrails?.untrustedFavorite === 'block' ? 'block' : 'confirm'
+  };
+
   return {
     reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultStoredConfig.reminders,
     internetFavorites:
@@ -219,6 +232,7 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
         ? partial.supportContactName
         : defaultStoredConfig.supportContactName,
     safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
+    webGuardrails,
     requireAdminPin:
       typeof partial.requireAdminPin === 'boolean'
         ? partial.requireAdminPin
@@ -270,13 +284,26 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
       }
     : existing.allowedModules;
 
-  const { adminPin, allowedModules: _allowedModules, ...restPatch } = patch;
+  const nextWebGuardrails = patch.webGuardrails
+    ? {
+        ...existing.webGuardrails,
+        ...patch.webGuardrails
+      }
+    : existing.webGuardrails;
+
+  const {
+    adminPin,
+    allowedModules: _allowedModules,
+    webGuardrails: _webGuardrails,
+    ...restPatch
+  } = patch;
 
   const merged: StoredAppConfig = {
     ...existing,
     ...restPatch,
     adminPinHash: adminPin ? hashAdminPin(adminPin) : existing.adminPinHash,
     allowedModules: nextAllowedModules,
+    webGuardrails: nextWebGuardrails,
     updatedAt: new Date().toISOString()
   };
 
