@@ -22,6 +22,7 @@ Current implementation includes:
 - Photos module upgraded with album views, slideshow controls, and share-to-family flow
 - Video Call module upgraded with family shortcuts, saved meetings, and confirmation prompts
 - Facebook module upgraded with guided actions and suspicious-message safety prompts
+- Help assistant now routes commands to Email/Photos/Internet/Facebook/Video Call/Family modules
 
 ## Project Structure
 

@@ -69,6 +69,80 @@ const scenarios: Scenario[] = [
     ]
   },
   {
+    matches: (input) =>
+      input.includes('open internet') ||
+      input.includes('open browser') ||
+      input.includes('open website'),
+    riskLevel: 'safe',
+    message: 'I can open Internet with trusted favorites and search in large text.',
+    actions: [
+      {
+        id: 'open_internet',
+        label: 'Open Internet',
+        description: 'Go to the Internet screen.'
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  },
+  {
+    matches: (input) => input.includes('open facebook') || input === 'facebook',
+    riskLevel: 'safe',
+    message: 'I can open Facebook with safety reminders and easy controls.',
+    actions: [
+      {
+        id: 'open_facebook',
+        label: 'Open Facebook',
+        description: 'Go to the Facebook screen.'
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  },
+  {
+    matches: (input) =>
+      input.includes('open video call') ||
+      input.includes('start a call') ||
+      input.includes('video call'),
+    riskLevel: 'safe',
+    message: 'I can open Video Call so you can use your family shortcuts.',
+    actions: [
+      {
+        id: 'open_videocall',
+        label: 'Open Video Call',
+        description: 'Go to the Video Call screen.'
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  },
+  {
+    matches: (input) => input.includes('open family') || input.includes('family contacts'),
+    riskLevel: 'safe',
+    message: 'I can open Family contacts and quick actions now.',
+    actions: [
+      {
+        id: 'open_family',
+        label: 'Open Family',
+        description: 'Go to the Family screen.'
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  },
+  {
     matches: (input) => input.includes('is this safe') || input.includes('safe?') || input.includes('scam'),
     riskLevel: 'caution',
     message:
@@ -143,6 +217,11 @@ const fallbackResponse: AssistantCommandResponse = {
       id: 'show_photos',
       label: 'Show My Photos',
       description: 'Open your recent photo view.'
+    },
+    {
+      id: 'open_family',
+      label: 'Open Family',
+      description: 'See family contacts and quick actions.'
     }
   ]
 };
@@ -151,6 +230,10 @@ const actionModuleMap: Record<string, keyof AllowedModules> = {
   open_email: 'email',
   read_aloud: 'email',
   summarize_email: 'email',
+  open_internet: 'internet',
+  open_facebook: 'facebook',
+  open_videocall: 'videocall',
+  open_family: 'family',
   open_photos: 'photos',
   show_photos: 'photos',
   start_slideshow: 'photos'

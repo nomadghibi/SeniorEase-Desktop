@@ -27,6 +27,7 @@
 - Replaced photos placeholder with album browsing, slideshow state, and guided share actions.
 - Replaced video call placeholder with family call shortcuts, saved meeting links, and guarded launch actions.
 - Replaced Facebook placeholder with guided shortcuts and suspicious-content escalation prompts.
+- Expanded assistant mock command coverage across all primary modules.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

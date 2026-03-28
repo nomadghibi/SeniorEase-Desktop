@@ -9,6 +9,10 @@ import type { SupportLogEntry } from '@/types/support';
 
 const quickActions = [
   'Open my email',
+  'Open internet',
+  'Open Facebook',
+  'Open video call',
+  'Open family',
   'Read this email',
   'Show my photos',
   'Is this safe?',
@@ -29,6 +33,11 @@ const starterResponse: AssistantCommandResponse = {
       id: 'show_photos',
       label: 'Show My Photos',
       description: 'View your recent pictures.'
+    },
+    {
+      id: 'open_family',
+      label: 'Open Family',
+      description: 'Go to family contacts.'
     }
   ]
 };
@@ -126,6 +135,26 @@ const HelpScreen = () => {
   const handleAction = (action: AssistantAction) => {
     if (action.id === 'open_email') {
       goTo('email');
+      return;
+    }
+
+    if (action.id === 'open_internet') {
+      goTo('internet');
+      return;
+    }
+
+    if (action.id === 'open_facebook') {
+      goTo('facebook');
+      return;
+    }
+
+    if (action.id === 'open_videocall') {
+      goTo('videocall');
+      return;
+    }
+
+    if (action.id === 'open_family') {
+      goTo('family');
       return;
     }
 
