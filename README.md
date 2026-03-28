@@ -16,6 +16,7 @@ Current implementation includes:
 - Settings PIN lock flow with configurable 4-8 digit admin PIN
 - Config export/import and reset-to-default workflows for repeatable support setups
 - Global safety mode banner and strict-mode Internet guardrail behavior
+- Email module upgraded with inbox workflow, suspicious warnings, and confirmation-based actions
 
 ## Project Structure
 

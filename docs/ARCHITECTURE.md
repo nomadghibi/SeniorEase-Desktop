@@ -21,6 +21,7 @@
 - Settings now includes a support activity panel for closing open tickets.
 - Added a config-driven admin PIN gate for opening Settings.
 - Added a global safety-mode banner and strict-mode blocking for direct unknown web entry.
+- Replaced email placeholder with guided inbox/read/reply flow including suspicious-email warning states.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
