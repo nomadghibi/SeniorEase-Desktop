@@ -18,6 +18,8 @@ export type AppConfig = {
   familyContacts: FamilyContact[];
   supportContactName: string;
   safetyMode: 'standard' | 'strict';
+  requireAdminPin: boolean;
+  adminPin: string;
   allowedModules: {
     email: boolean;
     photos: boolean;

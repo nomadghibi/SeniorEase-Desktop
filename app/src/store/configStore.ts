@@ -20,6 +20,8 @@ const defaultConfig: AppConfig = {
   ],
   supportContactName: 'Support',
   safetyMode: 'standard',
+  requireAdminPin: true,
+  adminPin: '1234',
   allowedModules: {
     email: true,
     photos: true,

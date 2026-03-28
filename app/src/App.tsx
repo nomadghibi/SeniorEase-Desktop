@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import type { ScreenId } from '@/lib/modules';
+import SettingsLockScreen from '@/screens/SettingsLockScreen';
 import { useConfigStore } from '@/store/configStore';
+import { useAdminStore } from '@/store/adminStore';
 import { useUiStore } from '@/store/uiStore';
 import EmailScreen from '@/screens/EmailScreen';
 import FacebookScreen from '@/screens/FacebookScreen';
@@ -30,6 +32,9 @@ const App = () => {
   const goHome = useUiStore((state) => state.goHome);
   const loadConfig = useConfigStore((state) => state.loadConfig);
   const allowedModules = useConfigStore((state) => state.config.allowedModules);
+  const requireAdminPin = useConfigStore((state) => state.config.requireAdminPin);
+  const isSettingsUnlocked = useAdminStore((state) => state.isSettingsUnlocked);
+  const lockSettings = useAdminStore((state) => state.lockSettings);
 
   useEffect(() => {
     void loadConfig();
@@ -37,6 +42,7 @@ const App = () => {
 
   useEffect(() => {
     if (currentScreen === 'home') {
+      lockSettings();
       return;
     }
 
@@ -47,7 +53,15 @@ const App = () => {
     if (!allowedModules[currentScreen]) {
       goHome();
     }
-  }, [allowedModules, currentScreen, goHome]);
+  }, [allowedModules, currentScreen, goHome, lockSettings]);
+
+  if (currentScreen === 'settings' && requireAdminPin && !isSettingsUnlocked) {
+    return (
+      <AppShell>
+        <SettingsLockScreen />
+      </AppShell>
+    );
+  }
 
   return <AppShell>{SCREEN_COMPONENTS[currentScreen]}</AppShell>;
 };

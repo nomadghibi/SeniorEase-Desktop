@@ -30,6 +30,8 @@ const defaultConfig: AppConfig = {
   ],
   supportContactName: 'Fred',
   safetyMode: 'standard',
+  requireAdminPin: true,
+  adminPin: '1234',
   allowedModules: {
     email: true,
     photos: true,
@@ -74,6 +76,14 @@ const migrateConfig = (input: unknown): AppConfig => {
         ? partial.supportContactName
         : defaultConfig.supportContactName,
     safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
+    requireAdminPin:
+      typeof partial.requireAdminPin === 'boolean'
+        ? partial.requireAdminPin
+        : defaultConfig.requireAdminPin,
+    adminPin:
+      typeof partial.adminPin === 'string' && /^\d{4,8}$/.test(partial.adminPin)
+        ? partial.adminPin
+        : defaultConfig.adminPin,
     allowedModules: {
       ...defaultConfig.allowedModules,
       ...(partial.allowedModules ?? {}),
@@ -109,7 +119,9 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
   const nextAllowedModules = patch.allowedModules
     ? {
         ...existing.allowedModules,
-        ...patch.allowedModules
+        ...patch.allowedModules,
+        help: true,
+        settings: true
       }
     : existing.allowedModules;
 

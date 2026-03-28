@@ -13,6 +13,7 @@ Current implementation includes:
 - Support escalation API + recent support request logs in Help
 - Admin support ticket activity section with close-ticket action
 - Strict safety mode behavior that upgrades caution actions to blocked
+- Settings PIN lock flow with configurable 4-8 digit admin PIN
 
 ## Project Structure
 
@@ -88,7 +89,9 @@ Sample config update payload:
 ```json
 {
   "internetFavorites": ["Church Website", "Local Weather", "Family Photos"],
-  "safetyMode": "strict"
+  "safetyMode": "strict",
+  "requireAdminPin": true,
+  "adminPin": "2468"
 }
 ```
 

@@ -31,6 +31,8 @@ export const appConfigSchema = z.object({
   familyContacts: z.array(familyContactSchema),
   supportContactName: z.string().min(1),
   safetyMode: z.enum(['standard', 'strict']),
+  requireAdminPin: z.boolean(),
+  adminPin: z.string().regex(/^\d{4,8}$/),
   allowedModules: moduleVisibilitySchema,
   updatedAt: z.string().min(1)
 });
@@ -42,6 +44,8 @@ export const appConfigPatchSchema = z
     familyContacts: z.array(familyContactSchema).optional(),
     supportContactName: z.string().min(1).optional(),
     safetyMode: z.enum(['standard', 'strict']).optional(),
+    requireAdminPin: z.boolean().optional(),
+    adminPin: z.string().regex(/^\d{4,8}$/).optional(),
     allowedModules: moduleVisibilitySchema.partial().optional()
   })
   .strict();

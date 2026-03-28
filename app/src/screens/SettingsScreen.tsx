@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import { closeSupportLog, fetchSupportLogs } from '@/lib/supportClient';
+import { useAdminStore } from '@/store/adminStore';
 import { useConfigStore } from '@/store/configStore';
+import { useUiStore } from '@/store/uiStore';
 import type { AppConfig, FamilyContact, Reminder } from '@/types/config';
 import type { SupportLogEntry } from '@/types/support';
 
@@ -30,12 +32,16 @@ const SettingsScreen = () => {
   const isSaving = useConfigStore((state) => state.isSaving);
   const saveConfigPatch = useConfigStore((state) => state.saveConfigPatch);
   const loadConfig = useConfigStore((state) => state.loadConfig);
+  const lockSettings = useAdminStore((state) => state.lockSettings);
+  const goHome = useUiStore((state) => state.goHome);
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [contacts, setContacts] = useState<FamilyContact[]>([]);
   const [supportContactName, setSupportContactName] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
+  const [requireAdminPin, setRequireAdminPin] = useState(true);
+  const [newAdminPin, setNewAdminPin] = useState('');
   const [allowedModules, setAllowedModules] = useState<AppConfig['allowedModules']>(config.allowedModules);
   const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
   const [supportLogsLoading, setSupportLogsLoading] = useState(false);
@@ -48,6 +54,7 @@ const SettingsScreen = () => {
     setContacts(config.familyContacts.map((item) => ({ ...item })));
     setSupportContactName(config.supportContactName);
     setSafetyMode(config.safetyMode);
+    setRequireAdminPin(config.requireAdminPin);
     setAllowedModules({ ...config.allowedModules });
   }, [config]);
 
@@ -69,6 +76,11 @@ const SettingsScreen = () => {
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (newAdminPin.length > 0 && !/^\d{4,8}$/.test(newAdminPin)) {
+      setStatusMessage('Admin PIN must be 4 to 8 digits.');
+      return;
+    }
 
     const nextReminders = reminders
       .map((item) => ({
@@ -96,6 +108,8 @@ const SettingsScreen = () => {
       familyContacts: nextContacts,
       supportContactName: supportContactName.trim() || 'Support',
       safetyMode,
+      requireAdminPin,
+      adminPin: newAdminPin.length > 0 ? newAdminPin : config.adminPin,
       allowedModules: {
         ...allowedModules,
         help: true,
@@ -104,6 +118,9 @@ const SettingsScreen = () => {
     });
 
     setStatusMessage(saved ? 'Settings saved.' : 'Could not save settings right now.');
+    if (saved) {
+      setNewAdminPin('');
+    }
   };
 
   const handleCloseSupportLog = async (id: string) => {
@@ -345,6 +362,38 @@ const SettingsScreen = () => {
               </select>
             </label>
           </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Require Admin PIN
+              </span>
+              <select
+                value={requireAdminPin ? 'yes' : 'no'}
+                onChange={(event) => setRequireAdminPin(event.target.value === 'yes')}
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              >
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Set New Admin PIN
+              </span>
+              <input
+                type="password"
+                inputMode="numeric"
+                value={newAdminPin}
+                onChange={(event) =>
+                  setNewAdminPin(event.target.value.replace(/[^\d]/g, '').slice(0, 8))
+                }
+                placeholder="Leave blank to keep current PIN"
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl tracking-[0.2em] text-[var(--text-strong)]"
+              />
+            </label>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
@@ -447,6 +496,16 @@ const SettingsScreen = () => {
             className="rounded-2xl border-2 border-[var(--line-strong)] bg-white px-6 py-3 text-xl font-semibold text-[var(--text-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Reload from Server
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              lockSettings();
+              goHome();
+            }}
+            className="rounded-2xl border-2 border-[#315740] bg-[#315740] px-6 py-3 text-xl font-semibold text-white"
+          >
+            Lock Settings
           </button>
         </div>
       </form>
