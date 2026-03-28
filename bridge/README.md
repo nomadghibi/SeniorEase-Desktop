@@ -24,5 +24,5 @@ Default URL: `http://localhost:8787`
 
 The bridge currently uses:
 - a mock assistant service designed for safe, typed responses
-- a local JSON config store at `bridge/data/config.json` for reminders, favorites, contacts, module policy, and admin PIN settings
+- a local JSON config store at `bridge/data/config.json` for reminders, URL-based favorites, contacts, module policy, and admin PIN settings
 - a local support log store at `bridge/data/support-logs.json`

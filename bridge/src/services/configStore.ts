@@ -10,18 +10,117 @@ const bridgeRootDirectory = path.resolve(currentDirectory, '../..');
 const dataDirectory = path.join(bridgeRootDirectory, 'data');
 const configFilePath = path.join(dataDirectory, 'config.json');
 
+const knownFavoriteUrls: Record<string, string> = {
+  'Church Website': 'https://www.churchofjesuschrist.org/',
+  'Local Weather': 'https://weather.com/',
+  'News You Trust': 'https://www.reuters.com/',
+  'Family Photo Album': 'https://photos.google.com/',
+  'Pharmacy Portal': 'https://www.cvs.com/pharmacy/',
+  'Bank Login': 'https://www.chase.com/'
+};
+
+const ensureHttpsUrl = (value: string): string => {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+};
+
+const normalizeFavorite = (
+  entry: unknown,
+  index: number
+): AppConfig['internetFavorites'][number] | null => {
+  if (typeof entry === 'string') {
+    const label = entry.trim();
+
+    if (!label) {
+      return null;
+    }
+
+    const mappedUrl = knownFavoriteUrls[label] ?? `https://duckduckgo.com/?q=${encodeURIComponent(label)}`;
+    return {
+      id: `favorite-${index + 1}`,
+      label,
+      url: mappedUrl,
+      trusted: Boolean(knownFavoriteUrls[label])
+    };
+  }
+
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const raw = entry as {
+    id?: unknown;
+    label?: unknown;
+    url?: unknown;
+    trusted?: unknown;
+  };
+
+  const label = typeof raw.label === 'string' ? raw.label.trim() : '';
+  const url = typeof raw.url === 'string' ? ensureHttpsUrl(raw.url) : '';
+
+  if (!label || !url) {
+    return null;
+  }
+
+  return {
+    id: typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : `favorite-${index + 1}`,
+    label,
+    url,
+    trusted: Boolean(raw.trusted)
+  };
+};
+
 const defaultConfig: AppConfig = {
   reminders: [
     { id: 'medication-1', text: 'Take morning medication at 9:00 AM', dueAt: '09:00' },
     { id: 'call-family-1', text: 'Call Anna this evening', dueAt: '18:30' }
   ],
   internetFavorites: [
-    'Church Website',
-    'Local Weather',
-    'News You Trust',
-    'Family Photo Album',
-    'Pharmacy Portal',
-    'Bank Login'
+    {
+      id: 'favorite-1',
+      label: 'Church Website',
+      url: 'https://www.churchofjesuschrist.org/',
+      trusted: true
+    },
+    {
+      id: 'favorite-2',
+      label: 'Local Weather',
+      url: 'https://weather.com/',
+      trusted: true
+    },
+    {
+      id: 'favorite-3',
+      label: 'News You Trust',
+      url: 'https://www.reuters.com/',
+      trusted: true
+    },
+    {
+      id: 'favorite-4',
+      label: 'Family Photo Album',
+      url: 'https://photos.google.com/',
+      trusted: true
+    },
+    {
+      id: 'favorite-5',
+      label: 'Pharmacy Portal',
+      url: 'https://www.cvs.com/pharmacy/',
+      trusted: true
+    },
+    {
+      id: 'favorite-6',
+      label: 'Bank Login',
+      url: 'https://www.chase.com/',
+      trusted: true
+    }
   ],
   familyContacts: [
     { id: 'anna', name: 'Anna', relation: 'Daughter', email: 'anna@example.com' },
@@ -61,13 +160,24 @@ const migrateConfig = (input: unknown): AppConfig => {
 
   const partial = input as Partial<AppConfig> & {
     allowedModules?: Partial<AppConfig['allowedModules']>;
+    internetFavorites?: unknown[];
   };
+
+  const normalizedFavorites = Array.isArray(partial.internetFavorites)
+    ? partial.internetFavorites
+        .map((entry, index) => normalizeFavorite(entry, index))
+        .filter(
+          (entry): entry is AppConfig['internetFavorites'][number] =>
+            entry !== null
+        )
+    : [];
 
   return {
     reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultConfig.reminders,
-    internetFavorites: Array.isArray(partial.internetFavorites)
-      ? partial.internetFavorites
-      : defaultConfig.internetFavorites,
+    internetFavorites:
+      normalizedFavorites.length > 0
+        ? normalizedFavorites
+        : defaultConfig.internetFavorites,
     familyContacts: Array.isArray(partial.familyContacts)
       ? partial.familyContacts
       : defaultConfig.familyContacts,

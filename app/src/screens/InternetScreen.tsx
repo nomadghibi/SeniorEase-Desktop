@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useConfigStore } from '@/store/configStore';
+import type { WebsiteFavorite } from '@/types/config';
 
 const urlLikePattern = /^([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i;
 
@@ -12,8 +13,24 @@ const toneClasses: Record<StatusTone, string> = {
   blocked: 'border-[#de9d9d] bg-[#fde4e4] text-[#6a1f1f]'
 };
 
+const ensureHttpsUrl = (value: string): string => {
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `https://${value}`;
+};
+
+const getDomainLabel = (url: string): string => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+};
+
 const InternetScreen = () => {
-  const trustedFavorites = useConfigStore((state) => state.config.internetFavorites);
+  const favorites = useConfigStore((state) => state.config.internetFavorites);
   const safetyMode = useConfigStore((state) => state.config.safetyMode);
 
   const [query, setQuery] = useState('');
@@ -25,6 +42,36 @@ const InternetScreen = () => {
   const openSearch = (value: string) => {
     const url = `https://duckduckgo.com/?q=${encodeURIComponent(value)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const openFavorite = (favorite: WebsiteFavorite) => {
+    if (!favorite.trusted && safetyMode === 'strict') {
+      setStatus({
+        tone: 'blocked',
+        message: `${favorite.label} is not marked trusted. Strict safety mode blocked opening this site.`
+      });
+      return;
+    }
+
+    if (!favorite.trusted && safetyMode === 'standard') {
+      const approved = window.confirm(
+        `${favorite.label} is not marked trusted. Open it anyway?`
+      );
+
+      if (!approved) {
+        setStatus({
+          tone: 'caution',
+          message: `Canceled opening ${favorite.label}.`
+        });
+        return;
+      }
+    }
+
+    window.open(ensureHttpsUrl(favorite.url), '_blank', 'noopener,noreferrer');
+    setStatus({
+      tone: 'safe',
+      message: `Opened favorite: ${favorite.label}`
+    });
   };
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -58,7 +105,7 @@ const InternetScreen = () => {
         return;
       }
 
-      const target = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+      const target = ensureHttpsUrl(trimmed);
       window.open(target, '_blank', 'noopener,noreferrer');
       setStatus({
         tone: 'safe',
@@ -71,14 +118,6 @@ const InternetScreen = () => {
     setStatus({
       tone: 'safe',
       message: 'Search opened in your browser.'
-    });
-  };
-
-  const handleFavoriteOpen = (favorite: string) => {
-    openSearch(favorite);
-    setStatus({
-      tone: 'safe',
-      message: `Opened favorite: ${favorite}`
     });
   };
 
@@ -120,19 +159,23 @@ const InternetScreen = () => {
       <div className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
         <h2 className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">Favorite Websites</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {trustedFavorites.length === 0 ? (
+          {favorites.length === 0 ? (
             <p className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-5 text-2xl text-[var(--text-muted)] sm:text-3xl md:col-span-2">
               No favorites are configured yet.
             </p>
           ) : null}
-          {trustedFavorites.map((favorite) => (
+          {favorites.map((favorite) => (
             <button
-              key={favorite}
+              key={favorite.id}
               type="button"
-              onClick={() => handleFavoriteOpen(favorite)}
-              className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-5 text-left text-2xl font-semibold text-[var(--text-strong)] transition-colors hover:border-[var(--line-strong)] sm:text-3xl"
+              onClick={() => openFavorite(favorite)}
+              className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-5 text-left transition-colors hover:border-[var(--line-strong)]"
             >
-              {favorite}
+              <p className="text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">{favorite.label}</p>
+              <p className="mt-1 text-lg text-[var(--text-muted)] sm:text-xl">{getDomainLabel(favorite.url)}</p>
+              <p className="mt-2 text-base text-[var(--text-muted)]">
+                {favorite.trusted ? 'Trusted Favorite' : 'Not Marked Trusted'}
+              </p>
             </button>
           ))}
         </div>

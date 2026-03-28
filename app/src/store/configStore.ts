@@ -13,10 +13,30 @@ const defaultConfig: AppConfig = {
     { id: 'fallback-reminder-2', text: 'Call family reminder', dueAt: '18:30' }
   ],
   internetFavorites: [
-    'Church Website',
-    'Local Weather',
-    'News You Trust',
-    'Family Photo Album'
+    {
+      id: 'favorite-1',
+      label: 'Church Website',
+      url: 'https://www.churchofjesuschrist.org/',
+      trusted: true
+    },
+    {
+      id: 'favorite-2',
+      label: 'Local Weather',
+      url: 'https://weather.com/',
+      trusted: true
+    },
+    {
+      id: 'favorite-3',
+      label: 'News You Trust',
+      url: 'https://www.reuters.com/',
+      trusted: true
+    },
+    {
+      id: 'favorite-4',
+      label: 'Family Photo Album',
+      url: 'https://photos.google.com/',
+      trusted: true
+    }
   ],
   familyContacts: [
     { id: 'anna', name: 'Anna', relation: 'Daughter' },

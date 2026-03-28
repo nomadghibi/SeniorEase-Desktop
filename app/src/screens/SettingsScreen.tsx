@@ -4,11 +4,31 @@ import { closeSupportLog, fetchSupportLogs } from '@/lib/supportClient';
 import { useAdminStore } from '@/store/adminStore';
 import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
-import type { AppConfig, AppConfigPatch, FamilyContact, Reminder } from '@/types/config';
+import type {
+  AppConfig,
+  AppConfigPatch,
+  FamilyContact,
+  Reminder,
+  WebsiteFavorite
+} from '@/types/config';
 import type { SupportLogEntry } from '@/types/support';
 
 const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const ensureHttpsUrl = (value: string): string => {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
 };
 
 const managedModuleLabels: Array<{
@@ -37,7 +57,7 @@ const SettingsScreen = () => {
   const goHome = useUiStore((state) => state.goHome);
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<WebsiteFavorite[]>([]);
   const [contacts, setContacts] = useState<FamilyContact[]>([]);
   const [supportContactName, setSupportContactName] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
@@ -52,7 +72,7 @@ const SettingsScreen = () => {
 
   useEffect(() => {
     setReminders(config.reminders.map((item) => ({ ...item })));
-    setFavorites([...config.internetFavorites]);
+    setFavorites(config.internetFavorites.map((item) => ({ ...item })));
     setContacts(config.familyContacts.map((item) => ({ ...item })));
     setSupportContactName(config.supportContactName);
     setSafetyMode(config.safetyMode);
@@ -92,7 +112,14 @@ const SettingsScreen = () => {
       }))
       .filter((item) => item.text.length > 0);
 
-    const nextFavorites = favorites.map((item) => item.trim()).filter((item) => item.length > 0);
+    const nextFavorites = favorites
+      .map((item, index) => ({
+        id: item.id || createId(`favorite-${index}`),
+        label: item.label.trim(),
+        url: ensureHttpsUrl(item.url),
+        trusted: Boolean(item.trusted)
+      }))
+      .filter((item) => item.label.length > 0 && item.url.length > 0);
 
     const nextContacts = contacts
       .map((item) => ({
@@ -170,7 +197,51 @@ const SettingsScreen = () => {
       patch.reminders = raw.reminders as Reminder[];
     }
     if (Array.isArray(raw.internetFavorites)) {
-      patch.internetFavorites = raw.internetFavorites as string[];
+      patch.internetFavorites = raw.internetFavorites.flatMap((entry, index) => {
+        if (typeof entry === 'string') {
+          const label = entry.trim();
+
+          if (!label) {
+            return [];
+          }
+
+          return [
+            {
+              id: createId(`imported-favorite-${index}`),
+              label,
+              url: `https://duckduckgo.com/?q=${encodeURIComponent(label)}`,
+              trusted: false
+            }
+          ];
+        }
+
+        if (!entry || typeof entry !== 'object') {
+          return [];
+        }
+
+        const favorite = entry as {
+          id?: unknown;
+          label?: unknown;
+          url?: unknown;
+          trusted?: unknown;
+        };
+
+        if (typeof favorite.label !== 'string' || typeof favorite.url !== 'string') {
+          return [];
+        }
+
+        return [
+          {
+            id:
+              typeof favorite.id === 'string' && favorite.id.trim().length > 0
+                ? favorite.id
+                : createId(`imported-favorite-${index}`),
+            label: favorite.label,
+            url: ensureHttpsUrl(favorite.url),
+            trusted: Boolean(favorite.trusted)
+          }
+        ];
+      });
     }
     if (Array.isArray(raw.familyContacts)) {
       patch.familyContacts = raw.familyContacts as FamilyContact[];
@@ -293,7 +364,17 @@ const SettingsScreen = () => {
             <h2 className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">Internet Favorites</h2>
             <button
               type="button"
-              onClick={() => setFavorites((current) => [...current, ''])}
+              onClick={() =>
+                setFavorites((current) => [
+                  ...current,
+                  {
+                    id: createId('favorite'),
+                    label: '',
+                    url: '',
+                    trusted: false
+                  }
+                ])
+              }
               className="rounded-xl border-2 border-[#2d5d42] bg-[#2d5d42] px-4 py-2 text-lg font-semibold text-white"
             >
               Add Favorite
@@ -301,19 +382,52 @@ const SettingsScreen = () => {
           </div>
           <div className="space-y-3">
             {favorites.map((favorite, index) => (
-              <div key={`${favorite}-${index}`} className="grid gap-3 rounded-2xl border border-[var(--line-soft)] bg-white p-4 md:grid-cols-[1fr_auto]">
+              <div key={favorite.id} className="grid gap-3 rounded-2xl border border-[var(--line-soft)] bg-white p-4 md:grid-cols-[1fr_1fr_auto_auto]">
                 <input
-                  value={favorite}
+                  value={favorite.label}
                   onChange={(event) =>
                     setFavorites((current) =>
                       current.map((entry, entryIndex) =>
-                        entryIndex === index ? event.target.value : entry
+                        entryIndex === index
+                          ? { ...entry, label: event.target.value }
+                          : entry
                       )
                     )
                   }
-                  placeholder="Favorite website label"
+                  placeholder="Favorite label"
                   className="rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
                 />
+                <input
+                  value={favorite.url}
+                  onChange={(event) =>
+                    setFavorites((current) =>
+                      current.map((entry, entryIndex) =>
+                        entryIndex === index
+                          ? { ...entry, url: event.target.value }
+                          : entry
+                      )
+                    )
+                  }
+                  placeholder="example.com"
+                  className="rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+                />
+                <label className="flex items-center justify-center gap-2 rounded-xl border border-[var(--line-soft)] px-3 py-2 text-lg text-[var(--text-strong)]">
+                  <input
+                    type="checkbox"
+                    checked={favorite.trusted}
+                    onChange={(event) =>
+                      setFavorites((current) =>
+                        current.map((entry, entryIndex) =>
+                          entryIndex === index
+                            ? { ...entry, trusted: event.target.checked }
+                            : entry
+                        )
+                      )
+                    }
+                    className="h-5 w-5 accent-[#2d5d42]"
+                  />
+                  Trusted
+                </label>
                 <button
                   type="button"
                   onClick={() => setFavorites((current) => current.filter((_, entryIndex) => entryIndex !== index))}

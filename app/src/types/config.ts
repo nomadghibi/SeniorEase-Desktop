@@ -12,9 +12,16 @@ export type FamilyContact = {
   phone?: string;
 };
 
+export type WebsiteFavorite = {
+  id: string;
+  label: string;
+  url: string;
+  trusted: boolean;
+};
+
 export type AppConfig = {
   reminders: Reminder[];
-  internetFavorites: string[];
+  internetFavorites: WebsiteFavorite[];
   familyContacts: FamilyContact[];
   supportContactName: string;
   safetyMode: 'standard' | 'strict';
