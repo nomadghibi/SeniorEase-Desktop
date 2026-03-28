@@ -1,0 +1,12 @@
+{
+  "name": "seniorease-desktop",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k \"npm --prefix bridge run dev\" \"npm --prefix app run dev\"",
+    "build": "npm --prefix bridge run build && npm --prefix app run build",
+    "typecheck": "npm --prefix bridge run typecheck && npm --prefix app run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

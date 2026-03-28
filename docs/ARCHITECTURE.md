@@ -1,13 +1,17 @@
 # Architecture
 
-## Phase 1 (Current)
+## Phase 1
 - Electron shell hosts a React/TypeScript renderer.
 - Renderer uses local state (Zustand) for module routing and navigation history.
 - Preload exposes a minimal safe API for non-sensitive UI hints.
 
-## Phase 2 (Planned)
-- Add local Node/Express bridge service in `bridge/`.
-- Add structured assistant command contract between UI and bridge.
+## Phase 2 (Current)
+- Added local Node/Express bridge service in `bridge/`.
+- Added `POST /assistant/command` API with typed structured responses.
+- Help screen now uses bridge responses and risk-level UI banners.
+- Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
-- Add OpenClaw adapter behind bridge service with strict guardrails.
+- Replace mock bridge assistant with OpenClaw adapter.
+- Enforce stronger policy checks and configurable guardrails.
+- Add support escalation workflows and richer action confirmations.

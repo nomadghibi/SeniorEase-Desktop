@@ -2,44 +2,78 @@
 
 SeniorEase Desktop is a senior-first Windows launcher built with Electron, React, TypeScript, and Tailwind CSS.
 
-This repository currently contains the Phase 1 MVP scaffold:
-- fullscreen launcher shell
-- large-button home screen with 7 modules
-- persistent bottom navigation (`Home`, `Back`, `Speak`, `Help`)
-- placeholder module screens for Email, Photos, Internet, Facebook, Video Call, Family, and Help
-- accessibility-first spacing, contrast, and typography choices
+Current implementation includes:
+- Phase 1 launcher UI scaffold (fullscreen shell + large modules + sticky nav)
+- Phase 2 local bridge service scaffold (Node/Express)
+- Help screen assistant integration using structured mock command responses
+- Risk-level banners (`safe`, `caution`, `blocked`) for assistant guidance
 
 ## Project Structure
 
 ```txt
 seniorease-desktop/
 |- app/        # Electron + React desktop launcher
-|- bridge/     # Reserved for Phase 2 local bridge service
+|- bridge/     # Local Node/Express assistant bridge (mock)
 |- docs/       # Product and architecture docs
 ```
 
 ## Run Locally (Windows + VS Code)
 
 1. Open VS Code.
-2. Open folder: `C:\Users\<you>\Documents\seniorease-desktop\app`
-3. In VS Code terminal:
+2. Open folder: `C:\Users\<you>\Documents\seniorease-desktop`
+3. In terminal, install dependencies:
 
 ```powershell
 npm install
+npm --prefix app install
+npm --prefix bridge install
+```
+
+4. Start both bridge + desktop app together:
+
+```powershell
 npm run dev
 ```
 
-4. The Electron window should open in fullscreen.
+Services started:
+- Bridge API: `http://localhost:8787`
+- Vite renderer: `http://localhost:5173`
+- Electron window: opens automatically in fullscreen
 
-## Build for Local Testing
+## Helpful Commands
 
 ```powershell
+npm run typecheck
 npm run build
-npm run start
 ```
+
+## Mock Assistant API
+
+Endpoint:
+- `POST /assistant/command`
+
+Sample payload:
+
+```json
+{
+  "userId": "local-user-1",
+  "sessionId": "phase2-session",
+  "command": "Is this safe?",
+  "context": {
+    "screen": "help"
+  }
+}
+```
+
+Mock commands implemented:
+- Open my email
+- Read this email
+- Show my photos
+- Is this safe?
+- Call support
 
 ## Notes
 
-- This is a UI scaffold only. It does **not** include OpenClaw or backend bridge logic yet.
-- Voice actions are placeholder-only in Phase 1.
-- Risky task automation is intentionally not implemented in this phase.
+- OpenClaw is still not integrated; this phase uses a mock bridge response layer.
+- High-risk actions are not automated and are represented as caution/blocked flows.
+- Voice actions remain placeholder-only in this phase.

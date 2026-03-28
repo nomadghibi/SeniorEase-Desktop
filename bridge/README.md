@@ -1,5 +1,19 @@
-# Bridge Service (Phase 2)
+# SeniorEase Bridge Service
 
-This folder is reserved for the local Node/Express bridge service that will connect the Electron UI to the assistant runtime.
+Local Node/Express bridge used by the desktop UI for structured assistant commands.
 
-Phase 1 intentionally leaves this layer unimplemented.
+## Run
+
+```bash
+npm install
+npm run dev
+```
+
+Default URL: `http://localhost:8787`
+
+## Endpoints
+
+- `GET /health`
+- `POST /assistant/command`
+
+The bridge currently uses a mock assistant service designed for safe, typed responses.

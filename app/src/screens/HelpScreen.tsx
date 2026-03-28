@@ -1,64 +1,126 @@
 import { FormEvent, useState } from 'react';
+import AssistantResponseCard from '@/components/AssistantResponseCard';
 import ScreenHeader from '@/components/ScreenHeader';
+import { sendAssistantCommand } from '@/lib/assistantClient';
+import { useUiStore } from '@/store/uiStore';
+import type { AssistantAction, AssistantCommandResponse } from '@/types/assistant';
 
 const quickActions = [
   'Open my email',
+  'Read this email',
   'Show my photos',
-  'Help with printer',
-  'Call support',
-  'Is this email safe?',
-  'Take me home'
+  'Is this safe?',
+  'Call support'
 ];
 
-const getSimpleResponse = (command: string): string => {
-  const normalized = command.toLowerCase();
-
-  if (normalized.includes('email') && normalized.includes('safe')) {
-    return 'I can help check this email. Please do not click links until we review it together.';
-  }
-
-  if (normalized.includes('printer')) {
-    return 'I can walk you through printer setup step by step. We can also call support if needed.';
-  }
-
-  if (normalized.includes('call support')) {
-    return 'Support is ready. Tap the support button to start a call.';
-  }
-
-  if (normalized.includes('photos')) {
-    return 'I can open your photos and show recent pictures first.';
-  }
-
-  return 'I can help with that. You can also tap Help options below for quick support.';
+const starterResponse: AssistantCommandResponse = {
+  success: true,
+  message: 'Ask for help in plain words. Example: "Open my email".',
+  riskLevel: 'safe',
+  actions: [
+    {
+      id: 'open_email',
+      label: 'Open My Email',
+      description: 'Go to your inbox.'
+    },
+    {
+      id: 'show_photos',
+      label: 'Show My Photos',
+      description: 'View your recent pictures.'
+    }
+  ]
 };
 
 const HelpScreen = () => {
   const [command, setCommand] = useState('');
-  const [response, setResponse] = useState('Ask for help in plain words. Example: "Read this email".');
+  const [response, setResponse] = useState<AssistantCommandResponse>(starterResponse);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const goTo = useUiStore((state) => state.goTo);
+  const goHome = useUiStore((state) => state.goHome);
 
-    const trimmed = command.trim();
+  const requestCommand = async (nextCommand: string) => {
+    const trimmed = nextCommand.trim();
 
     if (!trimmed) {
       return;
     }
 
-    setResponse(getSimpleResponse(trimmed));
-    setCommand('');
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const result = await sendAssistantCommand({
+        userId: 'local-user-1',
+        sessionId: 'phase2-session',
+        command: trimmed,
+        context: { screen: 'help' }
+      });
+
+      setResponse(result);
+      setCommand('');
+    } catch {
+      setErrorMessage('Bridge service is unavailable. Please start the local bridge and try again.');
+      setResponse({
+        success: true,
+        message: 'I cannot reach support services right now. You can still use quick actions while reconnecting.',
+        riskLevel: 'caution',
+        actions: [
+          {
+            id: 'open_email',
+            label: 'Open My Email',
+            description: 'Continue with local navigation.'
+          },
+          {
+            id: 'show_photos',
+            label: 'Show My Photos',
+            description: 'Continue with local navigation.'
+          }
+        ]
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void requestCommand(command);
+  };
+
+  const handleAction = (action: AssistantAction) => {
+    if (action.id === 'open_email') {
+      goTo('email');
+      return;
+    }
+
+    if (action.id === 'show_photos' || action.id === 'open_photos' || action.id === 'start_slideshow') {
+      goTo('photos');
+      return;
+    }
+
+    if (action.id === 'go_home') {
+      goHome();
+      return;
+    }
+
+    void requestCommand(action.label);
   };
 
   return (
     <section>
       <ScreenHeader
         title="Help"
-        subtitle="Tell me what you need, and I will guide you in simple steps."
+        subtitle="Tell me what you need, and I will guide you with safe next steps."
       />
 
       <div className="mb-6 rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label htmlFor="help-command" className="block text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">
+          <label
+            htmlFor="help-command"
+            className="block text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl"
+          >
             What do you need help with?
           </label>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -66,21 +128,29 @@ const HelpScreen = () => {
               id="help-command"
               value={command}
               onChange={(event) => setCommand(event.target.value)}
-              placeholder="Example: Is this email safe?"
+              placeholder="Example: Is this safe?"
               className="w-full rounded-2xl border-2 border-[var(--line-soft)] px-5 py-4 text-xl text-[var(--text-strong)] placeholder:text-[#698074] sm:text-2xl"
+              disabled={isLoading}
             />
             <button
               type="submit"
-              className="rounded-2xl border-2 border-[#2d5d42] bg-[#2d5d42] px-6 py-4 text-xl font-semibold text-white"
+              className="rounded-2xl border-2 border-[#2d5d42] bg-[#2d5d42] px-6 py-4 text-xl font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
+              disabled={isLoading}
             >
-              Get Help
+              {isLoading ? 'Checking...' : 'Get Help'}
             </button>
           </div>
         </form>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-[#aacfb1] bg-[var(--status-safe)] p-5 text-lg leading-relaxed text-[#154624] sm:text-xl">
-        {response}
+      {errorMessage ? (
+        <div className="mb-6 rounded-2xl border border-[#d7be7f] bg-[#fff2ce] p-4 text-lg text-[#5c3b00] sm:text-xl">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      <div className="mb-6">
+        <AssistantResponseCard response={response} loading={isLoading} onAction={handleAction} />
       </div>
 
       <div className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
@@ -92,8 +162,11 @@ const HelpScreen = () => {
             <button
               key={action}
               type="button"
-              onClick={() => setResponse(getSimpleResponse(action))}
-              className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-4 text-left text-2xl font-semibold text-[var(--text-strong)] transition-colors hover:border-[var(--line-strong)] sm:text-3xl"
+              onClick={() => {
+                void requestCommand(action);
+              }}
+              disabled={isLoading}
+              className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-4 text-left text-2xl font-semibold text-[var(--text-strong)] transition-colors hover:border-[var(--line-strong)] disabled:cursor-not-allowed disabled:opacity-50 sm:text-3xl"
             >
               {action}
             </button>
