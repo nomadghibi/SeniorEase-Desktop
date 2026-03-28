@@ -18,9 +18,19 @@ export type AppConfig = {
   familyContacts: FamilyContact[];
   supportContactName: string;
   safetyMode: 'standard' | 'strict';
+  allowedModules: {
+    email: boolean;
+    photos: boolean;
+    internet: boolean;
+    facebook: boolean;
+    videocall: boolean;
+    family: boolean;
+    help: boolean;
+    settings: boolean;
+  };
   updatedAt: string;
 };
 
-export type AppConfigPatch = Partial<
-  Omit<AppConfig, 'updatedAt'>
->;
+export type AppConfigPatch = Partial<Omit<AppConfig, 'updatedAt' | 'allowedModules'>> & {
+  allowedModules?: Partial<AppConfig['allowedModules']>;
+};

@@ -27,11 +27,27 @@ const SCREEN_COMPONENTS: Record<ScreenId, JSX.Element> = {
 
 const App = () => {
   const currentScreen = useUiStore((state) => state.currentScreen);
+  const goHome = useUiStore((state) => state.goHome);
   const loadConfig = useConfigStore((state) => state.loadConfig);
+  const allowedModules = useConfigStore((state) => state.config.allowedModules);
 
   useEffect(() => {
     void loadConfig();
   }, [loadConfig]);
+
+  useEffect(() => {
+    if (currentScreen === 'home') {
+      return;
+    }
+
+    if (currentScreen === 'settings') {
+      return;
+    }
+
+    if (!allowedModules[currentScreen]) {
+      goHome();
+    }
+  }, [allowedModules, currentScreen, goHome]);
 
   return <AppShell>{SCREEN_COMPONENTS[currentScreen]}</AppShell>;
 };

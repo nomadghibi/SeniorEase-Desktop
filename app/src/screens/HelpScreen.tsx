@@ -1,9 +1,11 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import AssistantResponseCard from '@/components/AssistantResponseCard';
 import ScreenHeader from '@/components/ScreenHeader';
 import { sendAssistantCommand } from '@/lib/assistantClient';
+import { fetchSupportLogs, requestSupport } from '@/lib/supportClient';
 import { useUiStore } from '@/store/uiStore';
 import type { AssistantAction, AssistantCommandResponse } from '@/types/assistant';
+import type { SupportLogEntry } from '@/types/support';
 
 const quickActions = [
   'Open my email',
@@ -36,9 +38,24 @@ const HelpScreen = () => {
   const [response, setResponse] = useState<AssistantCommandResponse>(starterResponse);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [supportNotice, setSupportNotice] = useState<string | null>(null);
+  const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
 
   const goTo = useUiStore((state) => state.goTo);
   const goHome = useUiStore((state) => state.goHome);
+
+  const loadSupportLogs = async () => {
+    try {
+      const result = await fetchSupportLogs(5);
+      setSupportLogs(result.logs);
+    } catch {
+      setSupportLogs([]);
+    }
+  };
+
+  useEffect(() => {
+    void loadSupportLogs();
+  }, []);
 
   const requestCommand = async (nextCommand: string) => {
     const trimmed = nextCommand.trim();
@@ -84,6 +101,23 @@ const HelpScreen = () => {
     }
   };
 
+  const escalateSupport = async (reason: string, riskLevel: AssistantCommandResponse['riskLevel']) => {
+    try {
+      const result = await requestSupport({
+        userId: 'local-user-1',
+        sessionId: 'phase2-session',
+        reason,
+        screen: 'help',
+        riskLevel
+      });
+
+      setSupportNotice(`${result.message} Ticket: ${result.ticketId}. ETA: ${result.estimatedCallbackMinutes} minutes.`);
+      await loadSupportLogs();
+    } catch {
+      setSupportNotice('Could not create support request right now. Please try again.');
+    }
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void requestCommand(command);
@@ -102,6 +136,24 @@ const HelpScreen = () => {
 
     if (action.id === 'go_home') {
       goHome();
+      return;
+    }
+
+    if (
+      action.id === 'call_support' ||
+      action.id === 'contact_support' ||
+      action.id === 'blocked_contact_support' ||
+      action.id === 'share_screen'
+    ) {
+      if (action.requiresConfirmation) {
+        const approved = window.confirm('This action needs approval. Continue?');
+
+        if (!approved) {
+          return;
+        }
+      }
+
+      void escalateSupport(action.label, response.riskLevel);
       return;
     }
 
@@ -149,8 +201,46 @@ const HelpScreen = () => {
         </div>
       ) : null}
 
+      {supportNotice ? (
+        <div className="mb-6 rounded-2xl border border-[#9ac6a4] bg-[#dff2e5] p-4 text-lg text-[#174128] sm:text-xl">
+          {supportNotice}
+        </div>
+      ) : null}
+
       <div className="mb-6">
         <AssistantResponseCard response={response} loading={isLoading} onAction={handleAction} />
+      </div>
+
+      <div className="mb-6 rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">
+            Recent Support Requests
+          </h2>
+          <button
+            type="button"
+            onClick={() => {
+              void loadSupportLogs();
+            }}
+            className="rounded-xl border-2 border-[var(--line-strong)] bg-white px-4 py-2 text-lg font-semibold text-[var(--text-strong)]"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {supportLogs.length === 0 ? (
+          <p className="text-xl text-[var(--text-muted)] sm:text-2xl">No support requests yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {supportLogs.map((log) => (
+              <article key={log.id} className="rounded-2xl border border-[var(--line-soft)] bg-white p-4">
+                <p className="text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">{log.reason}</p>
+                <p className="mt-1 text-lg text-[var(--text-muted)] sm:text-xl">
+                  {new Date(log.createdAt).toLocaleString()} • Status: {log.status}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">

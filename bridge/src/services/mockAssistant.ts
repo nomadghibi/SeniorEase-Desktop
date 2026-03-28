@@ -5,6 +5,8 @@ import type {
   RiskLevel
 } from '../types/assistant.js';
 
+type SafetyMode = 'standard' | 'strict';
+
 type Scenario = {
   matches: (input: string) => boolean;
   riskLevel: RiskLevel;
@@ -144,7 +146,8 @@ const fallbackResponse: AssistantCommandResponse = {
 };
 
 export const runMockAssistant = (
-  request: AssistantCommandRequest
+  request: AssistantCommandRequest,
+  safetyMode: SafetyMode
 ): AssistantCommandResponse => {
   const normalized = request.command.trim().toLowerCase();
 
@@ -154,10 +157,37 @@ export const runMockAssistant = (
     return fallbackResponse;
   }
 
-  return {
+  const response: AssistantCommandResponse = {
     success: true,
     message: scenario.message,
     riskLevel: scenario.riskLevel,
     actions: scenario.actions
+  };
+
+  if (safetyMode !== 'strict') {
+    return response;
+  }
+
+  if (response.riskLevel !== 'caution') {
+    return response;
+  }
+
+  return {
+    success: true,
+    riskLevel: 'blocked',
+    message:
+      'Strict safety mode is on. This action is paused until a trusted support person reviews it.',
+    actions: [
+      {
+        id: 'call_support',
+        label: 'Call Support',
+        description: 'Ask a trusted support person to review this action.'
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to your safe home screen.'
+      }
+    ]
   };
 };

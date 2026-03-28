@@ -1,11 +1,26 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useConfigStore } from '@/store/configStore';
-import type { FamilyContact, Reminder } from '@/types/config';
+import type { AppConfig, FamilyContact, Reminder } from '@/types/config';
 
 const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
+
+const managedModuleLabels: Array<{
+  key: keyof AppConfig['allowedModules'];
+  label: string;
+  locked?: boolean;
+}> = [
+  { key: 'email', label: 'Email' },
+  { key: 'photos', label: 'Photos' },
+  { key: 'internet', label: 'Internet' },
+  { key: 'facebook', label: 'Facebook' },
+  { key: 'videocall', label: 'Video Call' },
+  { key: 'family', label: 'Family' },
+  { key: 'help', label: 'Help', locked: true },
+  { key: 'settings', label: 'Settings', locked: true }
+];
 
 const SettingsScreen = () => {
   const config = useConfigStore((state) => state.config);
@@ -19,6 +34,7 @@ const SettingsScreen = () => {
   const [contacts, setContacts] = useState<FamilyContact[]>([]);
   const [supportContactName, setSupportContactName] = useState('');
   const [safetyMode, setSafetyMode] = useState<'standard' | 'strict'>('standard');
+  const [allowedModules, setAllowedModules] = useState<AppConfig['allowedModules']>(config.allowedModules);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +43,7 @@ const SettingsScreen = () => {
     setContacts(config.familyContacts.map((item) => ({ ...item })));
     setSupportContactName(config.supportContactName);
     setSafetyMode(config.safetyMode);
+    setAllowedModules({ ...config.allowedModules });
   }, [config]);
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
@@ -57,7 +74,12 @@ const SettingsScreen = () => {
       internetFavorites: nextFavorites,
       familyContacts: nextContacts,
       supportContactName: supportContactName.trim() || 'Support',
-      safetyMode
+      safetyMode,
+      allowedModules: {
+        ...allowedModules,
+        help: true,
+        settings: true
+      }
     });
 
     setStatusMessage(saved ? 'Settings saved.' : 'Could not save settings right now.');
@@ -291,6 +313,37 @@ const SettingsScreen = () => {
                 <option value="strict">Strict</option>
               </select>
             </label>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
+          <h2 className="mb-4 font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">
+            Module Visibility
+          </h2>
+          <p className="mb-4 text-xl text-[var(--text-muted)] sm:text-2xl">
+            Turn modules on or off for the senior home screen.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {managedModuleLabels.map((module) => (
+              <label
+                key={module.key}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--line-soft)] bg-white px-4 py-3"
+              >
+                <span className="text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">{module.label}</span>
+                <input
+                  type="checkbox"
+                  checked={allowedModules[module.key]}
+                  disabled={module.locked}
+                  onChange={(event) =>
+                    setAllowedModules((current) => ({
+                      ...current,
+                      [module.key]: event.target.checked
+                    }))
+                  }
+                  className="h-6 w-6 accent-[#2d5d42] disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </label>
+            ))}
           </div>
         </section>
 

@@ -20,6 +20,16 @@ const defaultConfig: AppConfig = {
   ],
   supportContactName: 'Support',
   safetyMode: 'standard',
+  allowedModules: {
+    email: true,
+    photos: true,
+    internet: true,
+    facebook: true,
+    videocall: true,
+    family: true,
+    help: true,
+    settings: true
+  },
   updatedAt: new Date().toISOString()
 };
 

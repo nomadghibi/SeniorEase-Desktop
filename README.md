@@ -9,6 +9,9 @@ Current implementation includes:
 - Risk-level banners (`safe`, `caution`, `blocked`) for assistant guidance
 - Bridge-backed configuration loading for reminders, family contacts, and internet favorites
 - Admin Settings screen for editing and saving configuration data
+- Module visibility policy controls with locked Help/Settings
+- Support escalation API + recent support request logs in Help
+- Strict safety mode behavior that upgrades caution actions to blocked
 
 ## Project Structure
 
@@ -55,6 +58,8 @@ Endpoint:
 - `POST /assistant/command`
 - `GET /config`
 - `POST /config`
+- `POST /support/request`
+- `GET /support/logs`
 
 Sample payload:
 

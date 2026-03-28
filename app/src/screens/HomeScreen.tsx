@@ -1,10 +1,13 @@
 import HomeTile from '@/components/HomeTile';
 import ScreenHeader from '@/components/ScreenHeader';
 import { HOME_MODULES } from '@/lib/modules';
+import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
 
 const HomeScreen = () => {
   const goTo = useUiStore((state) => state.goTo);
+  const allowedModules = useConfigStore((state) => state.config.allowedModules);
+  const visibleModules = HOME_MODULES.filter((module) => allowedModules[module.id]);
 
   return (
     <section>
@@ -14,7 +17,14 @@ const HomeScreen = () => {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {HOME_MODULES.map((module) => (
+        {visibleModules.length === 0 ? (
+          <article className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 md:col-span-2">
+            <p className="text-2xl text-[var(--text-muted)] sm:text-3xl">
+              No modules are enabled right now. Open Admin Settings to restore access.
+            </p>
+          </article>
+        ) : null}
+        {visibleModules.map((module) => (
           <HomeTile key={module.id} module={module} onSelect={goTo} />
         ))}
       </div>

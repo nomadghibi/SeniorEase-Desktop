@@ -14,12 +14,24 @@ export const familyContactSchema = z.object({
   phone: z.string().optional()
 });
 
+export const moduleVisibilitySchema = z.object({
+  email: z.boolean(),
+  photos: z.boolean(),
+  internet: z.boolean(),
+  facebook: z.boolean(),
+  videocall: z.boolean(),
+  family: z.boolean(),
+  help: z.boolean(),
+  settings: z.boolean()
+});
+
 export const appConfigSchema = z.object({
   reminders: z.array(reminderSchema),
   internetFavorites: z.array(z.string().min(1)),
   familyContacts: z.array(familyContactSchema),
   supportContactName: z.string().min(1),
   safetyMode: z.enum(['standard', 'strict']),
+  allowedModules: moduleVisibilitySchema,
   updatedAt: z.string().min(1)
 });
 
@@ -29,7 +41,8 @@ export const appConfigPatchSchema = z
     internetFavorites: z.array(z.string().min(1)).optional(),
     familyContacts: z.array(familyContactSchema).optional(),
     supportContactName: z.string().min(1).optional(),
-    safetyMode: z.enum(['standard', 'strict']).optional()
+    safetyMode: z.enum(['standard', 'strict']).optional(),
+    allowedModules: moduleVisibilitySchema.partial().optional()
   })
   .strict();
 

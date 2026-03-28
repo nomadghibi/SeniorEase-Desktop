@@ -30,6 +30,16 @@ const defaultConfig: AppConfig = {
   ],
   supportContactName: 'Fred',
   safetyMode: 'standard',
+  allowedModules: {
+    email: true,
+    photos: true,
+    internet: true,
+    facebook: true,
+    videocall: true,
+    family: true,
+    help: true,
+    settings: true
+  },
   updatedAt: new Date().toISOString()
 };
 
@@ -42,6 +52,38 @@ const writeConfig = async (config: AppConfig): Promise<void> => {
   await writeFile(configFilePath, JSON.stringify(config, null, 2), 'utf-8');
 };
 
+const migrateConfig = (input: unknown): AppConfig => {
+  if (!input || typeof input !== 'object') {
+    return defaultConfig;
+  }
+
+  const partial = input as Partial<AppConfig> & {
+    allowedModules?: Partial<AppConfig['allowedModules']>;
+  };
+
+  return {
+    reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultConfig.reminders,
+    internetFavorites: Array.isArray(partial.internetFavorites)
+      ? partial.internetFavorites
+      : defaultConfig.internetFavorites,
+    familyContacts: Array.isArray(partial.familyContacts)
+      ? partial.familyContacts
+      : defaultConfig.familyContacts,
+    supportContactName:
+      typeof partial.supportContactName === 'string' && partial.supportContactName.trim().length > 0
+        ? partial.supportContactName
+        : defaultConfig.supportContactName,
+    safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
+    allowedModules: {
+      ...defaultConfig.allowedModules,
+      ...(partial.allowedModules ?? {}),
+      help: true,
+      settings: true
+    },
+    updatedAt: typeof partial.updatedAt === 'string' ? partial.updatedAt : new Date().toISOString()
+  };
+};
+
 export const getConfig = async (): Promise<AppConfig> => {
   try {
     const raw = await readFile(configFilePath, 'utf-8');
@@ -52,8 +94,9 @@ export const getConfig = async (): Promise<AppConfig> => {
       return validated.data;
     }
 
-    await writeConfig(defaultConfig);
-    return defaultConfig;
+    const migrated = migrateConfig(parsed);
+    await writeConfig(migrated);
+    return migrated;
   } catch {
     await writeConfig(defaultConfig);
     return defaultConfig;
@@ -63,9 +106,17 @@ export const getConfig = async (): Promise<AppConfig> => {
 export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> => {
   const existing = await getConfig();
 
+  const nextAllowedModules = patch.allowedModules
+    ? {
+        ...existing.allowedModules,
+        ...patch.allowedModules
+      }
+    : existing.allowedModules;
+
   const merged: AppConfig = {
     ...existing,
     ...patch,
+    allowedModules: nextAllowedModules,
     updatedAt: new Date().toISOString()
   };
 

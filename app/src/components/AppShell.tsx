@@ -25,6 +25,7 @@ const AppShell = ({ children }: AppShellProps) => {
   const assistantNote = useUiStore((state) => state.assistantNote);
   const clearAssistantNote = useUiStore((state) => state.clearAssistantNote);
   const configError = useConfigStore((state) => state.errorMessage);
+  const reminders = useConfigStore((state) => state.config.reminders);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -75,6 +76,15 @@ const AppShell = ({ children }: AppShellProps) => {
                     ? `${reminderCount} reminder${reminderCount > 1 ? 's' : ''} today`
                     : 'No reminders today'}
                 </p>
+                {reminders.length > 0 ? (
+                  <div className="mt-1 space-y-1">
+                    {reminders.slice(0, 2).map((reminder) => (
+                      <p key={reminder.id} className="text-base text-[var(--text-muted)] sm:text-lg">
+                        {reminder.dueAt} - {reminder.text}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
