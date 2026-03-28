@@ -5,6 +5,7 @@ import assistantRouter from './routes/assistant.js';
 import configRouter from './routes/config.js';
 import supportRouter from './routes/support.js';
 import weatherRouter from './routes/weather.js';
+import { getAssistantProvider } from './services/assistantAdapter.js';
 
 const app = express();
 const port = Number(process.env.BRIDGE_PORT ?? 8787);
@@ -20,7 +21,8 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/health', (_request, response) => {
   response.json({
     ok: true,
-    service: 'seniorease-bridge'
+    service: 'seniorease-bridge',
+    assistantProvider: getAssistantProvider()
   });
 });
 

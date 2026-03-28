@@ -139,6 +139,10 @@ Sample config update payload:
 ## Notes
 
 - OpenClaw is still not integrated; this phase uses a mock bridge response layer.
-- Assistant provider defaults to `mock` (optional env: `ASSISTANT_PROVIDER`).
+- Assistant provider defaults to `mock` (set `ASSISTANT_PROVIDER=openclaw` to enable adapter path).
+- OpenClaw adapter env vars:
+  - `OPENCLAW_URL` (required when provider is `openclaw`)
+  - `OPENCLAW_COMMAND_PATH` (optional, default `/assistant/command`)
+  - `OPENCLAW_TIMEOUT_MS` (optional, default `7000`)
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.

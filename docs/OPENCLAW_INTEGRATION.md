@@ -18,3 +18,11 @@ OpenClaw integration is intentionally deferred until after launcher and bridge c
 - Keep `/assistant/command` contract stable
 - Swap execution backend from mock -> OpenClaw adapter
 - Preserve structured output (`message`, `actions`, `riskLevel`)
+
+## Runtime Toggles
+- `ASSISTANT_PROVIDER=mock|openclaw` (default `mock`)
+- `OPENCLAW_URL` required when `ASSISTANT_PROVIDER=openclaw`
+- `OPENCLAW_COMMAND_PATH` optional (default `/assistant/command`)
+- `OPENCLAW_TIMEOUT_MS` optional (default `7000`)
+
+If OpenClaw fails or is unreachable, bridge falls back to safe mock behavior.

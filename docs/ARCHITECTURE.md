@@ -36,4 +36,5 @@
 ## Current Technical Status
 - Assistant behavior currently uses mock adapter
 - Session memory is active in bridge per `sessionId`
+- OpenClaw adapter path is available via env toggle with mock fallback
 - OpenClaw remains staged for Phase 3 adapter implementation
