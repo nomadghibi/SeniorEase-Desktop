@@ -142,11 +142,12 @@ Sample config update payload:
 - Assistant provider defaults to `mock` (set `ASSISTANT_PROVIDER=anythingllm` to enable adapter path).
 - AnythingLLM adapter env vars:
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
-  - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/assistant/command`)
+  - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)
   - `ANYTHINGLLM_API_KEY` (optional)
   - `ANYTHINGLLM_TIMEOUT_MS` (optional, default `7000`)
   - `ANYTHINGLLM_MAX_FAILURES` (optional, default `3`)
   - `ANYTHINGLLM_COOLDOWN_MS` (optional, default `120000`)
 - Legacy `OPENCLAW_*` env vars are still accepted as compatibility aliases.
+- Admin Settings now includes assistant endpoint fields (`AnythingLLM URL`, `command path`, `API key`) that can override env defaults.
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.

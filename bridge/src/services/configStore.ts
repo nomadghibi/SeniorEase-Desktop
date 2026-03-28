@@ -38,6 +38,15 @@ const ensureHttpsUrl = (value: string): string => {
   return `https://${trimmed}`;
 };
 
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 const hashAdminPin = (pin: string): string => {
   return createHash('sha256')
     .update(`seniorease-admin-pin:${pin}`)
@@ -145,6 +154,11 @@ const defaultStoredConfig: StoredAppConfig = {
     directWebsiteEntry: 'confirm',
     untrustedFavorite: 'confirm'
   },
+  assistantSettings: {
+    anythingLlmUrl: '',
+    anythingLlmCommandPath: '/api/v1/workspace/default/chat',
+    anythingLlmApiKey: ''
+  },
   requireAdminPin: true,
   adminPinHash: hashAdminPin('1234'),
   allowedModules: {
@@ -178,6 +192,7 @@ const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
     weatherZipCode: stored.weatherZipCode,
     safetyMode: stored.safetyMode,
     webGuardrails: stored.webGuardrails,
+    assistantSettings: stored.assistantSettings,
     requireAdminPin: stored.requireAdminPin,
     adminPinConfigured: stored.adminPinHash.length > 0,
     allowedModules: stored.allowedModules,
@@ -193,6 +208,7 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
   const partial = input as Partial<StoredAppConfig> & {
     allowedModules?: Partial<StoredAppConfig['allowedModules']>;
     webGuardrails?: Partial<StoredAppConfig['webGuardrails']>;
+    assistantSettings?: Partial<StoredAppConfig['assistantSettings']>;
     internetFavorites?: unknown[];
     adminPin?: unknown;
   };
@@ -220,6 +236,26 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
       partial.webGuardrails?.untrustedFavorite === 'block' ? 'block' : 'confirm'
   };
 
+  const normalizedAssistantUrl = typeof partial.assistantSettings?.anythingLlmUrl === 'string'
+    ? partial.assistantSettings.anythingLlmUrl.trim()
+    : defaultStoredConfig.assistantSettings.anythingLlmUrl;
+
+  const assistantSettings: StoredAppConfig['assistantSettings'] = {
+    anythingLlmUrl:
+      normalizedAssistantUrl.length === 0 || isHttpUrl(normalizedAssistantUrl)
+        ? normalizedAssistantUrl
+        : defaultStoredConfig.assistantSettings.anythingLlmUrl,
+    anythingLlmCommandPath:
+      typeof partial.assistantSettings?.anythingLlmCommandPath === 'string' &&
+      /^\/[^\s]*$/.test(partial.assistantSettings.anythingLlmCommandPath.trim())
+        ? partial.assistantSettings.anythingLlmCommandPath.trim()
+        : defaultStoredConfig.assistantSettings.anythingLlmCommandPath,
+    anythingLlmApiKey:
+      typeof partial.assistantSettings?.anythingLlmApiKey === 'string'
+        ? partial.assistantSettings.anythingLlmApiKey.trim()
+        : defaultStoredConfig.assistantSettings.anythingLlmApiKey
+  };
+
   return {
     reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultStoredConfig.reminders,
     internetFavorites:
@@ -239,6 +275,7 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
         : defaultStoredConfig.weatherZipCode,
     safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
     webGuardrails,
+    assistantSettings,
     requireAdminPin:
       typeof partial.requireAdminPin === 'boolean'
         ? partial.requireAdminPin
@@ -297,10 +334,18 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
       }
     : existing.webGuardrails;
 
+  const nextAssistantSettings = patch.assistantSettings
+    ? {
+        ...existing.assistantSettings,
+        ...patch.assistantSettings
+      }
+    : existing.assistantSettings;
+
   const {
     adminPin,
     allowedModules: _allowedModules,
     webGuardrails: _webGuardrails,
+    assistantSettings: _assistantSettings,
     ...restPatch
   } = patch;
 
@@ -310,6 +355,7 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
     adminPinHash: adminPin ? hashAdminPin(adminPin) : existing.adminPinHash,
     allowedModules: nextAllowedModules,
     webGuardrails: nextWebGuardrails,
+    assistantSettings: nextAssistantSettings,
     updatedAt: new Date().toISOString()
   };
 

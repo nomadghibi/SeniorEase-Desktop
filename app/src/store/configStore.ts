@@ -49,6 +49,11 @@ const defaultConfig: AppConfig = {
     directWebsiteEntry: 'confirm',
     untrustedFavorite: 'confirm'
   },
+  assistantSettings: {
+    anythingLlmUrl: '',
+    anythingLlmCommandPath: '/api/v1/workspace/default/chat',
+    anythingLlmApiKey: ''
+  },
   requireAdminPin: true,
   adminPinConfigured: true,
   allowedModules: {

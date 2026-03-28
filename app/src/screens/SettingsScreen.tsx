@@ -65,6 +65,9 @@ const SettingsScreen = () => {
   const [webGuardrails, setWebGuardrails] = useState<AppConfig['webGuardrails']>(
     config.webGuardrails
   );
+  const [assistantSettings, setAssistantSettings] = useState<AppConfig['assistantSettings']>(
+    config.assistantSettings
+  );
   const [requireAdminPin, setRequireAdminPin] = useState(true);
   const [newAdminPin, setNewAdminPin] = useState('');
   const [allowedModules, setAllowedModules] = useState<AppConfig['allowedModules']>(config.allowedModules);
@@ -82,6 +85,7 @@ const SettingsScreen = () => {
     setWeatherZipCode(config.weatherZipCode);
     setSafetyMode(config.safetyMode);
     setWebGuardrails({ ...config.webGuardrails });
+    setAssistantSettings({ ...config.assistantSettings });
     setRequireAdminPin(config.requireAdminPin);
     setAllowedModules({ ...config.allowedModules });
   }, [config]);
@@ -120,6 +124,27 @@ const SettingsScreen = () => {
       return;
     }
 
+    const trimmedAnythingLlmUrl = assistantSettings.anythingLlmUrl.trim();
+    const trimmedCommandPath = assistantSettings.anythingLlmCommandPath.trim();
+
+    if (trimmedAnythingLlmUrl.length > 0) {
+      try {
+        const parsedUrl = new URL(trimmedAnythingLlmUrl);
+        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+          setStatusMessage('AnythingLLM URL must start with http:// or https://.');
+          return;
+        }
+      } catch {
+        setStatusMessage('AnythingLLM URL is invalid.');
+        return;
+      }
+    }
+
+    if (!/^\/[^\s]*$/.test(trimmedCommandPath)) {
+      setStatusMessage('AnythingLLM command path must start with "/" and contain no spaces.');
+      return;
+    }
+
     const nextReminders = reminders
       .map((item) => ({
         id: item.id || createId('reminder'),
@@ -155,6 +180,11 @@ const SettingsScreen = () => {
       weatherZipCode: weatherZipCode.trim(),
       safetyMode,
       webGuardrails,
+      assistantSettings: {
+        anythingLlmUrl: trimmedAnythingLlmUrl,
+        anythingLlmCommandPath: trimmedCommandPath,
+        anythingLlmApiKey: assistantSettings.anythingLlmApiKey.trim()
+      },
       requireAdminPin,
       allowedModules: {
         ...allowedModules,
@@ -280,6 +310,9 @@ const SettingsScreen = () => {
     }
     if (raw.webGuardrails && typeof raw.webGuardrails === 'object') {
       patch.webGuardrails = raw.webGuardrails as AppConfigPatch['webGuardrails'];
+    }
+    if (raw.assistantSettings && typeof raw.assistantSettings === 'object') {
+      patch.assistantSettings = raw.assistantSettings as AppConfigPatch['assistantSettings'];
     }
     if (typeof raw.requireAdminPin === 'boolean') {
       patch.requireAdminPin = raw.requireAdminPin;
@@ -670,6 +703,69 @@ const SettingsScreen = () => {
                 }
                 placeholder="Leave blank to keep current PIN"
                 className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl tracking-[0.2em] text-[var(--text-strong)]"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
+          <h2 className="mb-4 font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">
+            Assistant Endpoint (AnythingLLM)
+          </h2>
+          <p className="mb-4 text-xl text-[var(--text-muted)] sm:text-2xl">
+            Set ASSISTANT_PROVIDER to <span className="font-semibold">anythingllm</span> to enable live assistant calls.
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-2 md:col-span-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                AnythingLLM Base URL
+              </span>
+              <input
+                value={assistantSettings.anythingLlmUrl}
+                onChange={(event) =>
+                  setAssistantSettings((current) => ({
+                    ...current,
+                    anythingLlmUrl: event.target.value
+                  }))
+                }
+                placeholder="http://localhost:3001"
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                Command Path
+              </span>
+              <input
+                value={assistantSettings.anythingLlmCommandPath}
+                onChange={(event) =>
+                  setAssistantSettings((current) => ({
+                    ...current,
+                    anythingLlmCommandPath: event.target.value
+                  }))
+                }
+                placeholder="/api/v1/workspace/default/chat"
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
+                API Key (optional)
+              </span>
+              <input
+                type="password"
+                value={assistantSettings.anythingLlmApiKey}
+                onChange={(event) =>
+                  setAssistantSettings((current) => ({
+                    ...current,
+                    anythingLlmApiKey: event.target.value
+                  }))
+                }
+                placeholder="Leave blank if your AnythingLLM endpoint does not require auth"
+                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
               />
             </label>
           </div>

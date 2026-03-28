@@ -37,6 +37,24 @@ export const webGuardrailsSchema = z.object({
   untrustedFavorite: z.enum(['confirm', 'block'])
 });
 
+const anythingLlmUrlSchema = z
+  .string()
+  .trim()
+  .refine((value) => value.length === 0 || /^https?:\/\//i.test(value), {
+    message: 'AnythingLLM URL must be empty or start with http:// or https://.'
+  });
+
+const anythingLlmCommandPathSchema = z
+  .string()
+  .trim()
+  .regex(/^\/[^\s]*$/, 'AnythingLLM command path must start with "/" and contain no spaces.');
+
+export const assistantSettingsSchema = z.object({
+  anythingLlmUrl: anythingLlmUrlSchema,
+  anythingLlmCommandPath: anythingLlmCommandPathSchema,
+  anythingLlmApiKey: z.string().trim().max(2048)
+});
+
 export const storedAppConfigSchema = z.object({
   reminders: z.array(reminderSchema),
   internetFavorites: z.array(websiteFavoriteSchema),
@@ -45,6 +63,7 @@ export const storedAppConfigSchema = z.object({
   weatherZipCode: z.string().regex(/^\d{5}$/),
   safetyMode: z.enum(['standard', 'strict']),
   webGuardrails: webGuardrailsSchema,
+  assistantSettings: assistantSettingsSchema,
   requireAdminPin: z.boolean(),
   adminPinHash: z.string().min(32),
   allowedModules: moduleVisibilitySchema,
@@ -59,6 +78,7 @@ export const appConfigSchema = z.object({
   weatherZipCode: z.string().regex(/^\d{5}$/),
   safetyMode: z.enum(['standard', 'strict']),
   webGuardrails: webGuardrailsSchema,
+  assistantSettings: assistantSettingsSchema,
   requireAdminPin: z.boolean(),
   adminPinConfigured: z.boolean(),
   allowedModules: moduleVisibilitySchema,
@@ -74,6 +94,14 @@ export const appConfigPatchSchema = z
     weatherZipCode: z.string().regex(/^\d{5}$/).optional(),
     safetyMode: z.enum(['standard', 'strict']).optional(),
     webGuardrails: webGuardrailsSchema.partial().optional(),
+    assistantSettings:
+      assistantSettingsSchema
+        .partial()
+        .extend({
+          anythingLlmUrl: anythingLlmUrlSchema.optional(),
+          anythingLlmCommandPath: anythingLlmCommandPathSchema.optional()
+        })
+        .optional(),
     requireAdminPin: z.boolean().optional(),
     adminPin: z.string().regex(/^\d{4,8}$/).optional(),
     allowedModules: moduleVisibilitySchema.partial().optional()

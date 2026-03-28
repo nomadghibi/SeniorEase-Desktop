@@ -30,12 +30,13 @@ AnythingLLM integration is intentionally staged after launcher and bridge contra
 - Bridge adapter env vars (canonical):
   - `ASSISTANT_PROVIDER=mock|anythingllm` (default `mock`)
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
-  - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/assistant/command`)
+  - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)
   - `ANYTHINGLLM_API_KEY` (optional, recommended for secured deployments)
   - `ANYTHINGLLM_TIMEOUT_MS` (optional, default `7000`)
   - `ANYTHINGLLM_MAX_FAILURES` (optional, default `3`)
   - `ANYTHINGLLM_COOLDOWN_MS` (optional, default `120000`)
 - Legacy OpenClaw env vars are still accepted as compatibility aliases during migration.
+- Admin Settings can persist URL/path/API key per installation and override env defaults at runtime.
 
 ## Workspace and Agent Strategy
 - Use one AnythingLLM workspace per household profile by default.
@@ -61,6 +62,7 @@ AnythingLLM integration is intentionally staged after launcher and bridge contra
 
 ## Fallback and Failure Behavior
 - If AnythingLLM is unavailable or returns invalid payloads, bridge falls back to safe mock behavior.
+- Adapter maps AnythingLLM workspace chat responses (`textResponse`, `type`, `error`, `sources`) into SeniorEase structured response cards.
 - Consecutive failures trigger cooldown fallback to prevent repeated unstable calls.
 - `/health` exposes `assistantRuntime` details:
   - configured provider

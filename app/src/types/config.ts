@@ -24,6 +24,12 @@ export type WebGuardrails = {
   untrustedFavorite: 'confirm' | 'block';
 };
 
+export type AssistantSettings = {
+  anythingLlmUrl: string;
+  anythingLlmCommandPath: string;
+  anythingLlmApiKey: string;
+};
+
 export type AppConfig = {
   reminders: Reminder[];
   internetFavorites: WebsiteFavorite[];
@@ -32,6 +38,7 @@ export type AppConfig = {
   weatherZipCode: string;
   safetyMode: 'standard' | 'strict';
   webGuardrails: WebGuardrails;
+  assistantSettings: AssistantSettings;
   requireAdminPin: boolean;
   adminPinConfigured: boolean;
   allowedModules: {
@@ -53,4 +60,5 @@ export type AppConfigPatch = Partial<
   adminPin?: string;
   allowedModules?: Partial<AppConfig['allowedModules']>;
   webGuardrails?: Partial<AppConfig['webGuardrails']>;
+  assistantSettings?: Partial<AppConfig['assistantSettings']>;
 };

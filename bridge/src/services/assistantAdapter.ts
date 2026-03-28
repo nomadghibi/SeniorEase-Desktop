@@ -84,6 +84,8 @@ class ResilientAssistantAdapter implements AssistantAdapter {
     const fallbackUntil = this.fallbackUntilEpoch > now
       ? new Date(this.fallbackUntilEpoch).toISOString()
       : null;
+    const missingUrl =
+      this.lastError?.includes('URL is missing') ?? false;
 
     return {
       configuredProvider: this.configuredProvider,
@@ -92,7 +94,8 @@ class ResilientAssistantAdapter implements AssistantAdapter {
       anythingLlmReady:
         this.configuredProvider === 'anythingllm' &&
         this.anythingLlmAdapter !== null &&
-        fallbackUntil === null,
+        fallbackUntil === null &&
+        !missingUrl,
       consecutiveFailures: this.consecutiveFailures,
       fallbackUntil,
       lastError: this.lastError
@@ -151,22 +154,11 @@ const createAssistantAdapter = (): AssistantAdapter => {
   );
 
   if (provider === 'anythingllm') {
-    const baseUrl = (process.env.ANYTHINGLLM_URL ?? process.env.OPENCLAW_URL)?.trim();
-
-    if (!baseUrl) {
-      console.warn(
-        '[assistant] ASSISTANT_PROVIDER=anythingllm but ANYTHINGLLM_URL is missing. Using mock.'
-      );
-      return new ResilientAssistantAdapter('anythingllm', null, {
-        maxFailures,
-        cooldownMs,
-        initialError: 'ANYTHINGLLM_URL missing'
-      });
-    }
+    const baseUrl = (process.env.ANYTHINGLLM_URL ?? process.env.OPENCLAW_URL)?.trim() || null;
 
     const path =
       (process.env.ANYTHINGLLM_COMMAND_PATH ?? process.env.OPENCLAW_COMMAND_PATH)?.trim() ||
-      '/assistant/command';
+      '/api/v1/workspace/default/chat';
     const timeoutMs = parseTimeoutMs(process.env.ANYTHINGLLM_TIMEOUT_MS ?? process.env.OPENCLAW_TIMEOUT_MS);
     const apiKey = (process.env.ANYTHINGLLM_API_KEY ?? process.env.OPENCLAW_API_KEY)?.trim() || null;
     const anythingLlmAdapter = new AnythingLLMAdapter({
@@ -175,9 +167,17 @@ const createAssistantAdapter = (): AssistantAdapter => {
       timeoutMs,
       apiKey
     });
+
+    if (!baseUrl) {
+      console.warn(
+        '[assistant] ASSISTANT_PROVIDER=anythingllm and ANYTHINGLLM_URL is not set in env. Using Settings override or mock fallback.'
+      );
+    }
+
     return new ResilientAssistantAdapter('anythingllm', anythingLlmAdapter, {
       maxFailures,
-      cooldownMs
+      cooldownMs,
+      initialError: baseUrl ? null : 'ANYTHINGLLM_URL missing in env (Settings value may still be used)'
     });
   }
 
