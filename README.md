@@ -8,6 +8,7 @@ Current implementation includes:
 - Help screen assistant integration using structured mock command responses
 - Risk-level banners (`safe`, `caution`, `blocked`) for assistant guidance
 - Bridge-backed configuration loading for reminders, family contacts, and internet favorites
+- Admin Settings screen for editing and saving configuration data
 
 ## Project Structure
 

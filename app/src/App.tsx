@@ -10,6 +10,7 @@ import HelpScreen from '@/screens/HelpScreen';
 import HomeScreen from '@/screens/HomeScreen';
 import InternetScreen from '@/screens/InternetScreen';
 import PhotosScreen from '@/screens/PhotosScreen';
+import SettingsScreen from '@/screens/SettingsScreen';
 import VideoCallScreen from '@/screens/VideoCallScreen';
 
 const SCREEN_COMPONENTS: Record<ScreenId, JSX.Element> = {
@@ -20,7 +21,8 @@ const SCREEN_COMPONENTS: Record<ScreenId, JSX.Element> = {
   facebook: <FacebookScreen />,
   videocall: <VideoCallScreen />,
   family: <FamilyScreen />,
-  help: <HelpScreen />
+  help: <HelpScreen />,
+  settings: <SettingsScreen />
 };
 
 const App = () => {

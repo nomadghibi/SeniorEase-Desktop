@@ -12,6 +12,7 @@
 - Help screen now uses bridge responses and risk-level UI banners.
 - Family and Internet screens now load contacts/favorites from bridge configuration.
 - Reminder count in the launcher header now reflects bridge configuration data.
+- Added an Admin Settings UI that updates the shared config via bridge APIs.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

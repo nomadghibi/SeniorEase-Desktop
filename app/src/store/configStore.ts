@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { fetchConfig } from '@/lib/configClient';
-import type { AppConfig } from '@/types/config';
+import { fetchConfig, saveConfig } from '@/lib/configClient';
+import type { AppConfig, AppConfigPatch } from '@/types/config';
 import { useUiStore } from '@/store/uiStore';
 
 const defaultConfig: AppConfig = {
@@ -26,13 +26,16 @@ const defaultConfig: AppConfig = {
 type ConfigState = {
   config: AppConfig;
   isLoading: boolean;
+  isSaving: boolean;
   errorMessage: string | null;
   loadConfig: () => Promise<void>;
+  saveConfigPatch: (patch: AppConfigPatch) => Promise<boolean>;
 };
 
 export const useConfigStore = create<ConfigState>((set) => ({
   config: defaultConfig,
   isLoading: false,
+  isSaving: false,
   errorMessage: null,
   loadConfig: async () => {
     set({ isLoading: true, errorMessage: null });
@@ -51,6 +54,26 @@ export const useConfigStore = create<ConfigState>((set) => ({
         isLoading: false,
         errorMessage: 'Could not load remote config. Using local defaults.'
       });
+    }
+  },
+  saveConfigPatch: async (patch) => {
+    set({ isSaving: true, errorMessage: null });
+
+    try {
+      const config = await saveConfig(patch);
+      useUiStore.getState().setReminderCount(config.reminders.length);
+      set({
+        config,
+        isSaving: false,
+        errorMessage: null
+      });
+      return true;
+    } catch {
+      set({
+        isSaving: false,
+        errorMessage: 'Could not save settings. Please try again.'
+      });
+      return false;
     }
   }
 }));

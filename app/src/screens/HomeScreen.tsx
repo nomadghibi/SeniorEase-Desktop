@@ -18,6 +18,19 @@ const HomeScreen = () => {
           <HomeTile key={module.id} module={module} onSelect={goTo} />
         ))}
       </div>
+
+      <div className="mt-5">
+        <button
+          type="button"
+          onClick={() => goTo('settings')}
+          className="w-full rounded-2xl border-2 border-[var(--line-strong)] bg-white px-6 py-4 text-left text-2xl font-semibold text-[var(--text-strong)] transition-colors hover:bg-[#f4f8f3] sm:text-3xl"
+        >
+          Admin Settings
+          <span className="mt-1 block text-lg font-normal text-[var(--text-muted)] sm:text-xl">
+            Manage reminders, favorites, contacts, and safety preferences.
+          </span>
+        </button>
+      </div>
     </section>
   );
 };

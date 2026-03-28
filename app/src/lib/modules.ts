@@ -17,7 +17,8 @@ export type ScreenId =
   | 'facebook'
   | 'videocall'
   | 'family'
-  | 'help';
+  | 'help'
+  | 'settings';
 
 type ModuleTone = {
   bg: string;
@@ -27,7 +28,7 @@ type ModuleTone = {
 };
 
 export type HomeModule = {
-  id: Exclude<ScreenId, 'home'>;
+  id: Exclude<ScreenId, 'home' | 'settings'>;
   label: string;
   subtitle: string;
   icon: LucideIcon;
