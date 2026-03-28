@@ -9,6 +9,7 @@
 - Added local Node/Express bridge service in `bridge/`.
 - Added `POST /assistant/command` API with typed structured responses.
 - Added `GET /config` and `POST /config` APIs backed by local JSON storage.
+- Added `POST /config/reset` for restoring safe default configuration.
 - Added `POST /support/request` and `GET /support/logs` for support escalation tracking.
 - Added `POST /support/logs/:id/close` for admin ticket lifecycle control.
 - Help screen now uses bridge responses and risk-level UI banners.

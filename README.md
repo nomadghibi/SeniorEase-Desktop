@@ -14,6 +14,7 @@ Current implementation includes:
 - Admin support ticket activity section with close-ticket action
 - Strict safety mode behavior that upgrades caution actions to blocked
 - Settings PIN lock flow with configurable 4-8 digit admin PIN
+- Config export/import and reset-to-default workflows for repeatable support setups
 
 ## Project Structure
 
@@ -60,6 +61,7 @@ Endpoint:
 - `POST /assistant/command`
 - `GET /config`
 - `POST /config`
+- `POST /config/reset`
 - `POST /support/request`
 - `GET /support/logs`
 - `POST /support/logs/:id/close`

@@ -136,3 +136,13 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
 
   return merged;
 };
+
+export const resetConfig = async (): Promise<AppConfig> => {
+  const next: AppConfig = {
+    ...defaultConfig,
+    updatedAt: new Date().toISOString()
+  };
+
+  await writeConfig(next);
+  return next;
+};

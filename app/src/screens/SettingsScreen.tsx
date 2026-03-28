@@ -4,7 +4,7 @@ import { closeSupportLog, fetchSupportLogs } from '@/lib/supportClient';
 import { useAdminStore } from '@/store/adminStore';
 import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
-import type { AppConfig, FamilyContact, Reminder } from '@/types/config';
+import type { AppConfig, AppConfigPatch, FamilyContact, Reminder } from '@/types/config';
 import type { SupportLogEntry } from '@/types/support';
 
 const createId = (prefix: string): string => {
@@ -31,6 +31,7 @@ const SettingsScreen = () => {
   const isLoading = useConfigStore((state) => state.isLoading);
   const isSaving = useConfigStore((state) => state.isSaving);
   const saveConfigPatch = useConfigStore((state) => state.saveConfigPatch);
+  const resetConfig = useConfigStore((state) => state.resetConfig);
   const loadConfig = useConfigStore((state) => state.loadConfig);
   const lockSettings = useAdminStore((state) => state.lockSettings);
   const goHome = useUiStore((state) => state.goHome);
@@ -46,6 +47,7 @@ const SettingsScreen = () => {
   const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
   const [supportLogsLoading, setSupportLogsLoading] = useState(false);
   const [closingLogId, setClosingLogId] = useState<string | null>(null);
+  const [importJson, setImportJson] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -131,6 +133,83 @@ const SettingsScreen = () => {
     } finally {
       setClosingLogId(null);
     }
+  };
+
+  const handleExportConfig = () => {
+    const fileBody = JSON.stringify(config, null, 2);
+    const blob = new Blob([fileBody], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    anchor.href = url;
+    anchor.download = `seniorease-config-${stamp}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setStatusMessage('Config exported.');
+  };
+
+  const handleImportConfig = async () => {
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(importJson);
+    } catch {
+      setStatusMessage('Import JSON is invalid.');
+      return;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      setStatusMessage('Import JSON must be an object.');
+      return;
+    }
+
+    const raw = parsed as Record<string, unknown>;
+    const patch: AppConfigPatch = {};
+
+    if (Array.isArray(raw.reminders)) {
+      patch.reminders = raw.reminders as Reminder[];
+    }
+    if (Array.isArray(raw.internetFavorites)) {
+      patch.internetFavorites = raw.internetFavorites as string[];
+    }
+    if (Array.isArray(raw.familyContacts)) {
+      patch.familyContacts = raw.familyContacts as FamilyContact[];
+    }
+    if (typeof raw.supportContactName === 'string') {
+      patch.supportContactName = raw.supportContactName;
+    }
+    if (raw.safetyMode === 'standard' || raw.safetyMode === 'strict') {
+      patch.safetyMode = raw.safetyMode;
+    }
+    if (typeof raw.requireAdminPin === 'boolean') {
+      patch.requireAdminPin = raw.requireAdminPin;
+    }
+    if (typeof raw.adminPin === 'string') {
+      patch.adminPin = raw.adminPin;
+    }
+    if (raw.allowedModules && typeof raw.allowedModules === 'object') {
+      patch.allowedModules = raw.allowedModules as AppConfigPatch['allowedModules'];
+    }
+
+    const saved = await saveConfigPatch(patch);
+    setStatusMessage(saved ? 'Config imported.' : 'Config import failed.');
+
+    if (saved) {
+      setImportJson('');
+    }
+  };
+
+  const handleResetConfig = async () => {
+    const approved = window.confirm(
+      'Reset all settings to safe defaults? This cannot be undone.'
+    );
+
+    if (!approved) {
+      return;
+    }
+
+    const reset = await resetConfig();
+    setStatusMessage(reset ? 'Settings reset to defaults.' : 'Settings reset failed.');
   };
 
   return (
@@ -476,6 +555,52 @@ const SettingsScreen = () => {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
+          <h2 className="mb-4 font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">
+            Config Backup and Restore
+          </h2>
+          <p className="mb-4 text-xl text-[var(--text-muted)] sm:text-2xl">
+            Export this setup for reuse, or import a saved JSON configuration.
+          </p>
+
+          <div className="mb-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleExportConfig}
+              className="rounded-2xl border-2 border-[#2d5d42] bg-[#2d5d42] px-5 py-3 text-xl font-semibold text-white"
+            >
+              Export Config
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void handleImportConfig();
+              }}
+              disabled={isSaving || importJson.trim().length === 0}
+              className="rounded-2xl border-2 border-[var(--line-strong)] bg-white px-5 py-3 text-xl font-semibold text-[var(--text-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Import Config
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void handleResetConfig();
+              }}
+              disabled={isSaving}
+              className="rounded-2xl border-2 border-[#a44343] bg-[#a44343] px-5 py-3 text-xl font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Reset to Defaults
+            </button>
+          </div>
+
+          <textarea
+            value={importJson}
+            onChange={(event) => setImportJson(event.target.value)}
+            placeholder="Paste exported config JSON here to import"
+            className="h-48 w-full rounded-2xl border-2 border-[var(--line-soft)] px-4 py-3 font-mono text-base text-[var(--text-strong)] sm:text-lg"
+          />
         </section>
 
         <div className="flex flex-wrap gap-3">

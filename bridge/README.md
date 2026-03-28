@@ -17,6 +17,7 @@ Default URL: `http://localhost:8787`
 - `POST /assistant/command`
 - `GET /config`
 - `POST /config`
+- `POST /config/reset`
 - `POST /support/request`
 - `GET /support/logs`
 - `POST /support/logs/:id/close`

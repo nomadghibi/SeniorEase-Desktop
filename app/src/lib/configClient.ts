@@ -37,3 +37,18 @@ export const saveConfig = async (
 
   return (await response.json()) as AppConfig;
 };
+
+export const resetConfigToDefaults = async (
+  signal?: AbortSignal
+): Promise<AppConfig> => {
+  const response = await fetch(`${bridgeBaseUrl}/config/reset`, {
+    method: 'POST',
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error(`Config reset failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as AppConfig;
+};

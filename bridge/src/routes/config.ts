@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { appConfigPatchSchema } from '../types/config.js';
-import { getConfig, updateConfig } from '../services/configStore.js';
+import { getConfig, resetConfig, updateConfig } from '../services/configStore.js';
 
 const configRouter = Router();
 
@@ -27,6 +27,15 @@ configRouter.post('/', async (request, response, next) => {
 
   try {
     const config = await updateConfig(parsed.data);
+    response.json(config);
+  } catch (error) {
+    next(error);
+  }
+});
+
+configRouter.post('/reset', async (_request, response, next) => {
+  try {
+    const config = await resetConfig();
     response.json(config);
   } catch (error) {
     next(error);

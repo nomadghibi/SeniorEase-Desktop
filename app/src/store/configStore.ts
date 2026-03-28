@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { fetchConfig, saveConfig } from '@/lib/configClient';
+import {
+  fetchConfig,
+  resetConfigToDefaults,
+  saveConfig
+} from '@/lib/configClient';
 import type { AppConfig, AppConfigPatch } from '@/types/config';
 import { useUiStore } from '@/store/uiStore';
 
@@ -42,6 +46,7 @@ type ConfigState = {
   errorMessage: string | null;
   loadConfig: () => Promise<void>;
   saveConfigPatch: (patch: AppConfigPatch) => Promise<boolean>;
+  resetConfig: () => Promise<boolean>;
 };
 
 export const useConfigStore = create<ConfigState>((set) => ({
@@ -84,6 +89,26 @@ export const useConfigStore = create<ConfigState>((set) => ({
       set({
         isSaving: false,
         errorMessage: 'Could not save settings. Please try again.'
+      });
+      return false;
+    }
+  },
+  resetConfig: async () => {
+    set({ isSaving: true, errorMessage: null });
+
+    try {
+      const config = await resetConfigToDefaults();
+      useUiStore.getState().setReminderCount(config.reminders.length);
+      set({
+        config,
+        isSaving: false,
+        errorMessage: null
+      });
+      return true;
+    } catch {
+      set({
+        isSaving: false,
+        errorMessage: 'Could not reset settings right now.'
       });
       return false;
     }
