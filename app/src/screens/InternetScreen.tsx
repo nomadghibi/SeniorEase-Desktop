@@ -1,15 +1,9 @@
 import ScreenHeader from '@/components/ScreenHeader';
-
-const trustedFavorites = [
-  'Church Website',
-  'Local Weather',
-  'News You Trust',
-  'Family Photo Album',
-  'Pharmacy Portal',
-  'Bank Login'
-];
+import { useConfigStore } from '@/store/configStore';
 
 const InternetScreen = () => {
+  const trustedFavorites = useConfigStore((state) => state.config.internetFavorites);
+
   return (
     <section>
       <ScreenHeader
@@ -36,6 +30,11 @@ const InternetScreen = () => {
       <div className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-6 sm:p-8">
         <h2 className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">Favorite Websites</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {trustedFavorites.length === 0 ? (
+            <p className="rounded-2xl border-2 border-[var(--line-soft)] bg-white px-5 py-5 text-2xl text-[var(--text-muted)] sm:text-3xl md:col-span-2">
+              No favorites are configured yet.
+            </p>
+          ) : null}
           {trustedFavorites.map((favorite) => (
             <button
               key={favorite}

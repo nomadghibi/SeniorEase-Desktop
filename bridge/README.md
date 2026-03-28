@@ -15,5 +15,9 @@ Default URL: `http://localhost:8787`
 
 - `GET /health`
 - `POST /assistant/command`
+- `GET /config`
+- `POST /config`
 
-The bridge currently uses a mock assistant service designed for safe, typed responses.
+The bridge currently uses:
+- a mock assistant service designed for safe, typed responses
+- a local JSON config store at `bridge/data/config.json` for reminders, favorites, and contacts

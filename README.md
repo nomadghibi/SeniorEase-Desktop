@@ -7,6 +7,7 @@ Current implementation includes:
 - Phase 2 local bridge service scaffold (Node/Express)
 - Help screen assistant integration using structured mock command responses
 - Risk-level banners (`safe`, `caution`, `blocked`) for assistant guidance
+- Bridge-backed configuration loading for reminders, family contacts, and internet favorites
 
 ## Project Structure
 
@@ -51,6 +52,8 @@ npm run build
 
 Endpoint:
 - `POST /assistant/command`
+- `GET /config`
+- `POST /config`
 
 Sample payload:
 
@@ -71,6 +74,15 @@ Mock commands implemented:
 - Show my photos
 - Is this safe?
 - Call support
+
+Sample config update payload:
+
+```json
+{
+  "internetFavorites": ["Church Website", "Local Weather", "Family Photos"],
+  "safetyMode": "strict"
+}
+```
 
 ## Notes
 

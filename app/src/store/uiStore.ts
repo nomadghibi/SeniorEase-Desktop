@@ -6,6 +6,7 @@ type UiState = {
   history: ScreenId[];
   reminderCount: number;
   assistantNote: string | null;
+  setReminderCount: (count: number) => void;
   goTo: (screen: ScreenId) => void;
   goHome: () => void;
   goBack: () => void;
@@ -19,8 +20,11 @@ const defaultSpeakHint = 'Voice support is coming soon. Tap Help for guided assi
 export const useUiStore = create<UiState>((set, get) => ({
   currentScreen: 'home',
   history: [],
-  reminderCount: 2,
+  reminderCount: 0,
   assistantNote: null,
+  setReminderCount: (count) => {
+    set({ reminderCount: Math.max(0, count) });
+  },
   goTo: (screen) => {
     const { currentScreen, history } = get();
 

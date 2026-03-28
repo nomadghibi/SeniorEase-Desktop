@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import assistantRouter from './routes/assistant.js';
+import configRouter from './routes/config.js';
 
 const app = express();
 const port = Number(process.env.BRIDGE_PORT ?? 8787);
@@ -21,6 +22,7 @@ app.get('/health', (_request, response) => {
 });
 
 app.use('/assistant', assistantRouter);
+app.use('/config', configRouter);
 
 app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
   const message = error instanceof Error ? error.message : 'Unexpected bridge error.';

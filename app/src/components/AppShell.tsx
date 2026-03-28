@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import BottomNav from './BottomNav';
+import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
 
 type AppShellProps = {
@@ -23,6 +24,7 @@ const AppShell = ({ children }: AppShellProps) => {
   const reminderCount = useUiStore((state) => state.reminderCount);
   const assistantNote = useUiStore((state) => state.assistantNote);
   const clearAssistantNote = useUiStore((state) => state.clearAssistantNote);
+  const configError = useConfigStore((state) => state.errorMessage);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -89,6 +91,14 @@ const AppShell = ({ children }: AppShellProps) => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        ) : null}
+
+        {configError ? (
+          <div className="px-5 pt-4 sm:px-8">
+            <div className="rounded-2xl border border-[#d7be7f] bg-[#fff2ce] p-4 text-lg text-[#614000] sm:text-xl">
+              {configError}
             </div>
           </div>
         ) : null}

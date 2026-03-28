@@ -4,6 +4,7 @@ app/node_modules/
 app/dist/
 app/dist-electron/
 bridge/dist/
+bridge/data/
 
 # Logs
 *.log

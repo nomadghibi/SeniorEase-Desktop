@@ -1,12 +1,9 @@
 import ScreenHeader from '@/components/ScreenHeader';
-
-const contacts = [
-  { name: 'Anna', relation: 'Daughter' },
-  { name: 'Michael', relation: 'Grandson' },
-  { name: 'Fred', relation: 'Support Contact' }
-];
+import { useConfigStore } from '@/store/configStore';
 
 const FamilyScreen = () => {
+  const contacts = useConfigStore((state) => state.config.familyContacts);
+
   return (
     <section>
       <ScreenHeader
@@ -15,9 +12,16 @@ const FamilyScreen = () => {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {contacts.length === 0 ? (
+          <article className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-5 md:col-span-2 xl:col-span-3">
+            <p className="text-2xl text-[var(--text-muted)] sm:text-3xl">
+              No family contacts configured yet.
+            </p>
+          </article>
+        ) : null}
         {contacts.map((contact) => (
           <article
-            key={contact.name}
+            key={contact.id}
             className="rounded-3xl border border-[var(--line-soft)] bg-[var(--bg-panel)] p-5"
           >
             <p className="font-[var(--font-display)] text-3xl text-[var(--text-strong)] sm:text-4xl">{contact.name}</p>

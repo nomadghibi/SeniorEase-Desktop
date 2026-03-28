@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import type { ScreenId } from '@/lib/modules';
+import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
 import EmailScreen from '@/screens/EmailScreen';
 import FacebookScreen from '@/screens/FacebookScreen';
@@ -23,6 +25,11 @@ const SCREEN_COMPONENTS: Record<ScreenId, JSX.Element> = {
 
 const App = () => {
   const currentScreen = useUiStore((state) => state.currentScreen);
+  const loadConfig = useConfigStore((state) => state.loadConfig);
+
+  useEffect(() => {
+    void loadConfig();
+  }, [loadConfig]);
 
   return <AppShell>{SCREEN_COMPONENTS[currentScreen]}</AppShell>;
 };
