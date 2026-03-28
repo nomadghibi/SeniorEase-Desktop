@@ -26,6 +26,7 @@ const AppShell = ({ children }: AppShellProps) => {
   const clearAssistantNote = useUiStore((state) => state.clearAssistantNote);
   const configError = useConfigStore((state) => state.errorMessage);
   const reminders = useConfigStore((state) => state.config.reminders);
+  const safetyMode = useConfigStore((state) => state.config.safetyMode);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -104,6 +105,18 @@ const AppShell = ({ children }: AppShellProps) => {
             </div>
           </div>
         ) : null}
+
+        <div className="px-5 pt-4 sm:px-8">
+          <div
+            className={`rounded-2xl border p-3 text-lg font-semibold sm:text-xl ${
+              safetyMode === 'strict'
+                ? 'border-[#de9d9d] bg-[#fde4e4] text-[#6a1f1f]'
+                : 'border-[#aacfb1] bg-[#dff2e5] text-[#174128]'
+            }`}
+          >
+            Safety Mode: {safetyMode === 'strict' ? 'Strict (extra protections on)' : 'Standard'}
+          </div>
+        </div>
 
         {configError ? (
           <div className="px-5 pt-4 sm:px-8">

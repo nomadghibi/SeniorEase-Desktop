@@ -20,6 +20,7 @@
 - Added module visibility policy controls and strict safety-mode assistant behavior.
 - Settings now includes a support activity panel for closing open tickets.
 - Added a config-driven admin PIN gate for opening Settings.
+- Added a global safety-mode banner and strict-mode blocking for direct unknown web entry.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
