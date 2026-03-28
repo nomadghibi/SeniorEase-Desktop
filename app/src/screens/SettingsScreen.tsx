@@ -1,5 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import { sendAssistantCommand } from '@/lib/assistantClient';
+import { fetchBridgeHealth } from '@/lib/healthClient';
 import { closeSupportLog, fetchSupportLogs } from '@/lib/supportClient';
 import { useAdminStore } from '@/store/adminStore';
 import { useConfigStore } from '@/store/configStore';
@@ -11,6 +13,7 @@ import type {
   Reminder,
   WebsiteFavorite
 } from '@/types/config';
+import type { BridgeHealthResponse } from '@/types/health';
 import type { SupportLogEntry } from '@/types/support';
 
 const createId = (prefix: string): string => {
@@ -74,6 +77,10 @@ const SettingsScreen = () => {
   const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
   const [supportLogsLoading, setSupportLogsLoading] = useState(false);
   const [closingLogId, setClosingLogId] = useState<string | null>(null);
+  const [assistantHealth, setAssistantHealth] = useState<BridgeHealthResponse | null>(null);
+  const [assistantHealthLoading, setAssistantHealthLoading] = useState(false);
+  const [assistantProbeLoading, setAssistantProbeLoading] = useState(false);
+  const [assistantProbeMessage, setAssistantProbeMessage] = useState<string | null>(null);
   const [importJson, setImportJson] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -102,8 +109,42 @@ const SettingsScreen = () => {
     }
   };
 
+  const refreshAssistantHealth = async () => {
+    setAssistantHealthLoading(true);
+    try {
+      const health = await fetchBridgeHealth();
+      setAssistantHealth(health);
+    } catch {
+      setAssistantHealth(null);
+    } finally {
+      setAssistantHealthLoading(false);
+    }
+  };
+
+  const handleAssistantProbe = async () => {
+    setAssistantProbeLoading(true);
+    setAssistantProbeMessage(null);
+
+    try {
+      const response = await sendAssistantCommand({
+        userId: 'admin-local',
+        sessionId: `settings-probe-${Date.now()}`,
+        command: 'Take me home',
+        context: { screen: 'settings' }
+      });
+
+      setAssistantProbeMessage(`Test response: ${response.message}`);
+    } catch {
+      setAssistantProbeMessage('Test command failed. Check endpoint URL/path/key and bridge status.');
+    } finally {
+      await refreshAssistantHealth();
+      setAssistantProbeLoading(false);
+    }
+  };
+
   useEffect(() => {
     void refreshSupportLogs();
+    void refreshAssistantHealth();
   }, []);
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
@@ -768,6 +809,71 @@ const SettingsScreen = () => {
                 className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
               />
             </label>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-[var(--line-soft)] bg-white p-4">
+            <div className="mb-3 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  void refreshAssistantHealth();
+                }}
+                className="rounded-xl border-2 border-[var(--line-strong)] bg-white px-4 py-2 text-lg font-semibold text-[var(--text-strong)]"
+              >
+                {assistantHealthLoading ? 'Checking...' : 'Refresh Assistant Status'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleAssistantProbe();
+                }}
+                disabled={assistantProbeLoading}
+                className="rounded-xl border-2 border-[#2d5d42] bg-[#2d5d42] px-4 py-2 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {assistantProbeLoading ? 'Running Test...' : 'Run Test Command'}
+              </button>
+            </div>
+
+            {assistantHealth ? (
+              <div className="grid gap-2 text-lg text-[var(--text-strong)] sm:text-xl">
+                <p>
+                  Configured Provider: <span className="font-semibold">{assistantHealth.assistantRuntime.configuredProvider}</span>
+                </p>
+                <p>
+                  Effective Provider: <span className="font-semibold">{assistantHealth.assistantRuntime.effectiveProvider}</span>
+                </p>
+                <p>
+                  AnythingLLM Ready: <span className="font-semibold">{assistantHealth.assistantRuntime.anythingLlmReady ? 'Yes' : 'No'}</span>
+                </p>
+                <p>
+                  Consecutive Failures: <span className="font-semibold">{assistantHealth.assistantRuntime.consecutiveFailures}</span>
+                </p>
+                <p>
+                  Cooldown Until:{' '}
+                  <span className="font-semibold">
+                    {assistantHealth.assistantRuntime.fallbackUntil
+                      ? new Date(assistantHealth.assistantRuntime.fallbackUntil).toLocaleString()
+                      : 'Not in cooldown'}
+                  </span>
+                </p>
+                <p>
+                  Last Error:{' '}
+                  <span className="font-semibold">
+                    {assistantHealth.assistantRuntime.lastError ?? 'None'}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <p className="text-lg text-[#a44343] sm:text-xl">
+                Assistant status unavailable. Make sure the bridge is running.
+              </p>
+            )}
+
+            {assistantProbeMessage ? (
+              <p className="mt-3 rounded-xl border border-[#d7be7f] bg-[#fff2ce] px-3 py-2 text-lg text-[#614000] sm:text-xl">
+                {assistantProbeMessage}
+              </p>
+            ) : null}
           </div>
         </section>
 
