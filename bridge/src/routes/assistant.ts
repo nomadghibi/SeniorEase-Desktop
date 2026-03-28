@@ -31,7 +31,11 @@ assistantRouter.post('/command', async (request, response, next) => {
 
   try {
     const config = await getConfig();
-    const result = runMockAssistant(parsed.data, config.safetyMode);
+    const result = runMockAssistant(
+      parsed.data,
+      config.safetyMode,
+      config.allowedModules
+    );
     response.json(result);
   } catch (error) {
     next(error);

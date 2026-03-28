@@ -4,8 +4,10 @@ import type {
   AssistantCommandResponse,
   RiskLevel
 } from '../types/assistant.js';
+import type { AppConfig } from '../types/config.js';
 
 type SafetyMode = 'standard' | 'strict';
+type AllowedModules = AppConfig['allowedModules'];
 
 type Scenario = {
   matches: (input: string) => boolean;
@@ -145,11 +147,77 @@ const fallbackResponse: AssistantCommandResponse = {
   ]
 };
 
+const actionModuleMap: Record<string, keyof AllowedModules> = {
+  open_email: 'email',
+  read_aloud: 'email',
+  summarize_email: 'email',
+  open_photos: 'photos',
+  show_photos: 'photos',
+  start_slideshow: 'photos'
+};
+
+const detectRequestedModule = (
+  input: string
+): keyof AllowedModules | null => {
+  if (input.includes('support') || input.includes('help me')) {
+    return null;
+  }
+
+  if (input.includes('email')) {
+    return 'email';
+  }
+
+  if (input.includes('photo') || input.includes('pictures')) {
+    return 'photos';
+  }
+
+  if (input.includes('facebook')) {
+    return 'facebook';
+  }
+
+  if (input.includes('internet') || input.includes('website') || input.includes('browser')) {
+    return 'internet';
+  }
+
+  if (input.includes('video call') || input.includes('zoom') || input.includes('meet') || input.includes('teams')) {
+    return 'videocall';
+  }
+
+  if (input.includes('family')) {
+    return 'family';
+  }
+
+  return null;
+};
+
 export const runMockAssistant = (
   request: AssistantCommandRequest,
-  safetyMode: SafetyMode
+  safetyMode: SafetyMode,
+  allowedModules: AllowedModules
 ): AssistantCommandResponse => {
   const normalized = request.command.trim().toLowerCase();
+  const requestedModule = detectRequestedModule(normalized);
+
+  if (requestedModule && !allowedModules[requestedModule]) {
+    return {
+      success: true,
+      riskLevel: 'blocked',
+      message:
+        'That section is currently turned off by support settings. You can ask support to enable it.',
+      actions: [
+        {
+          id: 'call_support',
+          label: 'Call Support',
+          description: 'Request access to this section.'
+        },
+        {
+          id: 'go_home',
+          label: 'Go Home',
+          description: 'Return to your main screen.'
+        }
+      ]
+    };
+  }
 
   const scenario = scenarios.find((candidate) => candidate.matches(normalized));
 
@@ -164,20 +232,11 @@ export const runMockAssistant = (
     actions: scenario.actions
   };
 
-  if (safetyMode !== 'strict') {
-    return response;
-  }
-
-  if (response.riskLevel !== 'caution') {
-    return response;
-  }
-
-  return {
-    success: true,
-    riskLevel: 'blocked',
-    message:
-      'Strict safety mode is on. This action is paused until a trusted support person reviews it.',
-    actions: [
+  if (safetyMode === 'strict' && response.riskLevel === 'caution') {
+    response.riskLevel = 'blocked';
+    response.message =
+      'Strict safety mode is on. This action is paused until a trusted support person reviews it.';
+    response.actions = [
       {
         id: 'call_support',
         label: 'Call Support',
@@ -188,6 +247,42 @@ export const runMockAssistant = (
         label: 'Go Home',
         description: 'Return to your safe home screen.'
       }
-    ]
+    ];
+  }
+
+  const filteredActions = response.actions.filter((action) => {
+    const module = actionModuleMap[action.id];
+
+    if (!module) {
+      return true;
+    }
+
+    return allowedModules[module];
+  });
+
+  if (filteredActions.length === 0) {
+    return {
+      success: true,
+      riskLevel: 'caution',
+      message:
+        'Available actions are limited by current support settings. You can go home or call support.',
+      actions: [
+        {
+          id: 'call_support',
+          label: 'Call Support',
+          description: 'Ask support to review or enable this feature.'
+        },
+        {
+          id: 'go_home',
+          label: 'Go Home',
+          description: 'Return to the main screen.'
+        }
+      ]
+    };
+  }
+
+  return {
+    ...response,
+    actions: filteredActions
   };
 };

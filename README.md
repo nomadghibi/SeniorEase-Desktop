@@ -18,6 +18,7 @@ Current implementation includes:
 - Global safety mode banner and strict-mode Internet guardrail behavior
 - Email module upgraded with inbox workflow, suspicious warnings, and confirmation-based actions
 - Family module quick actions now route to Email/Video Call/Photos with policy-aware guidance
+- Assistant now enforces module visibility policy when interpreting commands
 
 ## Project Structure
 
