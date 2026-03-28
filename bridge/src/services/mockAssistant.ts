@@ -6,7 +6,6 @@ import type {
 } from '../types/assistant.js';
 import type { AppConfig } from '../types/config.js';
 
-type SafetyMode = 'standard' | 'strict';
 type AllowedModules = AppConfig['allowedModules'];
 
 type Scenario = {
@@ -202,30 +201,6 @@ const scenarios: Scenario[] = [
   }
 ];
 
-const fallbackResponse: AssistantCommandResponse = {
-  success: true,
-  riskLevel: 'safe',
-  message:
-    'I can help with that. Try one of the quick actions below, or ask in simple words like "Open my email".',
-  actions: [
-    {
-      id: 'open_email',
-      label: 'Open My Email',
-      description: 'Go to your inbox with large controls.'
-    },
-    {
-      id: 'show_photos',
-      label: 'Show My Photos',
-      description: 'Open your recent photo view.'
-    },
-    {
-      id: 'open_family',
-      label: 'Open Family',
-      description: 'See family contacts and quick actions.'
-    }
-  ]
-};
-
 const actionModuleMap: Record<string, keyof AllowedModules> = {
   open_email: 'email',
   read_aloud: 'email',
@@ -237,6 +212,319 @@ const actionModuleMap: Record<string, keyof AllowedModules> = {
   open_photos: 'photos',
   show_photos: 'photos',
   start_slideshow: 'photos'
+};
+
+const normalizeText = (value: string): string => {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const getSupportCallLabel = (supportContactName: string): string => {
+  const trimmed = supportContactName.trim();
+  return trimmed.length > 0 ? `Call ${trimmed}` : 'Call Support';
+};
+
+const callSupportAction = (supportContactName: string): AssistantAction => {
+  return {
+    id: 'call_support',
+    label: getSupportCallLabel(supportContactName),
+    description: 'Connect with a trusted support person.'
+  };
+};
+
+const fallbackResponse = (supportContactName: string): AssistantCommandResponse => {
+  return {
+    success: true,
+    riskLevel: 'safe',
+    message:
+      'I can help with that. Try one of the quick actions below, or ask in simple words like "Open my email".',
+    actions: [
+      {
+        id: 'open_email',
+        label: 'Open My Email',
+        description: 'Go to your inbox with large controls.'
+      },
+      {
+        id: 'show_photos',
+        label: 'Show My Photos',
+        description: 'Open your recent photo view.'
+      },
+      {
+        id: 'call_support',
+        label: getSupportCallLabel(supportContactName),
+        description: 'Connect with a trusted support person.'
+      }
+    ]
+  };
+};
+
+const moduleDisabledResponse = (supportContactName: string): AssistantCommandResponse => {
+  return {
+    success: true,
+    riskLevel: 'blocked',
+    message:
+      'That section is currently turned off by support settings. You can ask support to enable it.',
+    actions: [
+      callSupportAction(supportContactName),
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to your main screen.'
+      }
+    ]
+  };
+};
+
+const limitedActionsResponse = (supportContactName: string): AssistantCommandResponse => {
+  return {
+    success: true,
+    riskLevel: 'caution',
+    message:
+      'Available actions are limited by current support settings. You can go home or call support.',
+    actions: [
+      callSupportAction(supportContactName),
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  };
+};
+
+const normalizeHostKey = (url: string): string => {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./i, '');
+    const parts = host.split('.');
+    const withoutTld = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0];
+    return normalizeText(withoutTld);
+  } catch {
+    return '';
+  }
+};
+
+const findFavoriteFromInput = (
+  normalizedInput: string,
+  favorites: AppConfig['internetFavorites']
+): AppConfig['internetFavorites'][number] | null => {
+  for (const favorite of favorites) {
+    const labelKey = normalizeText(favorite.label);
+    const hostKey = normalizeHostKey(favorite.url);
+
+    if (labelKey && normalizedInput.includes(labelKey)) {
+      return favorite;
+    }
+
+    if (hostKey && normalizedInput.includes(hostKey)) {
+      return favorite;
+    }
+  }
+
+  return null;
+};
+
+const findFamilyContactFromTarget = (
+  normalizedTarget: string,
+  contacts: AppConfig['familyContacts']
+): AppConfig['familyContacts'][number] | null => {
+  for (const contact of contacts) {
+    const nameKey = normalizeText(contact.name);
+    const relationKey = normalizeText(contact.relation);
+    const isNameMatch =
+      nameKey.length > 0 &&
+      (nameKey === normalizedTarget ||
+        nameKey.includes(normalizedTarget) ||
+        normalizedTarget.includes(nameKey));
+    const isRelationMatch =
+      relationKey.length > 0 &&
+      (relationKey === normalizedTarget ||
+        relationKey.includes(normalizedTarget) ||
+        normalizedTarget.includes(relationKey));
+
+    if (isNameMatch || isRelationMatch) {
+      return contact;
+    }
+  }
+
+  return null;
+};
+
+const extractCallTarget = (normalizedInput: string): string | null => {
+  const match = normalizedInput.match(/\bcall\s+(.+)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const cleaned = match[1]
+    .replace(/\b(please|now|right now|for me)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return cleaned.length > 0 ? cleaned : null;
+};
+
+const buildPrinterHelpResponse = (
+  normalizedInput: string,
+  supportContactName: string
+): AssistantCommandResponse | null => {
+  if (!normalizedInput.includes('printer')) {
+    return null;
+  }
+
+  return {
+    success: true,
+    riskLevel: 'caution',
+    message:
+      'I can help with printer issues. The safest next step is to contact support for guided troubleshooting.',
+    actions: [
+      callSupportAction(supportContactName),
+      {
+        id: 'share_screen',
+        label: 'Share Screen',
+        description: 'Let support guide you live.',
+        requiresConfirmation: true
+      }
+    ]
+  };
+};
+
+const buildCallByNameResponse = (
+  normalizedInput: string,
+  config: AppConfig
+): AssistantCommandResponse | null => {
+  const target = extractCallTarget(normalizedInput);
+
+  if (!target) {
+    return null;
+  }
+
+  const supportName = normalizeText(config.supportContactName);
+  const isSupportTarget =
+    target.includes('support') ||
+    (supportName.length > 0 &&
+      (target === supportName ||
+        target.includes(supportName) ||
+        supportName.includes(target)));
+
+  if (isSupportTarget) {
+    return {
+      success: true,
+      riskLevel: 'caution',
+      message:
+        'I can contact your support person now and prepare a request with details from this screen.',
+      actions: [
+        callSupportAction(config.supportContactName),
+        {
+          id: 'share_screen',
+          label: 'Share Screen',
+          description: 'Let support guide you live.',
+          requiresConfirmation: true
+        }
+      ]
+    };
+  }
+
+  const contact = findFamilyContactFromTarget(target, config.familyContacts);
+
+  if (!contact) {
+    return null;
+  }
+
+  if (!config.allowedModules.videocall) {
+    return moduleDisabledResponse(config.supportContactName);
+  }
+
+  const actions: AssistantAction[] = [
+    {
+      id: 'open_videocall',
+      label: 'Open Video Call',
+      description: `Open Video Call to contact ${contact.name}.`
+    },
+    {
+      id: 'go_home',
+      label: 'Go Home',
+      description: 'Return to the main screen.'
+    }
+  ];
+
+  if (config.allowedModules.family) {
+    actions.splice(1, 0, {
+      id: 'open_family',
+      label: 'Open Family',
+      description: `Review family options for ${contact.name}.`
+    });
+  }
+
+  return {
+    success: true,
+    riskLevel: 'safe',
+    message: `I can help you call ${contact.name}. I will open your Video Call screen.`,
+    actions
+  };
+};
+
+const buildWebsiteShortcutResponse = (
+  normalizedInput: string,
+  config: AppConfig
+): AssistantCommandResponse | null => {
+  const asksForWebsite =
+    normalizedInput.includes('website') ||
+    normalizedInput.includes('site') ||
+    normalizedInput.includes('take me to') ||
+    normalizedInput.includes('go to my');
+
+  if (!asksForWebsite) {
+    return null;
+  }
+
+  const favorite = findFavoriteFromInput(normalizedInput, config.internetFavorites);
+
+  if (!favorite) {
+    return null;
+  }
+
+  const blockUntrustedFavorite =
+    config.safetyMode === 'strict' || config.webGuardrails.untrustedFavorite === 'block';
+
+  if (!favorite.trusted && blockUntrustedFavorite) {
+    return {
+      success: true,
+      riskLevel: 'blocked',
+      message: `${favorite.label} is not marked trusted, so I paused this action for safety.`,
+      actions: [
+        callSupportAction(config.supportContactName),
+        {
+          id: 'go_home',
+          label: 'Go Home',
+          description: 'Return to the main screen.'
+        }
+      ]
+    };
+  }
+
+  return {
+    success: true,
+    riskLevel: favorite.trusted ? 'safe' : 'caution',
+    message: favorite.trusted
+      ? `I found ${favorite.label}. I can open Internet so you can visit it now.`
+      : `${favorite.label} is not marked trusted. I can still open Internet so you can decide carefully.`,
+    actions: [
+      {
+        id: 'open_internet',
+        label: 'Open Internet',
+        description: `Open Internet and then select ${favorite.label}.`
+      },
+      {
+        id: 'go_home',
+        label: 'Go Home',
+        description: 'Return to the main screen.'
+      }
+    ]
+  };
 };
 
 const detectRequestedModule = (
@@ -273,58 +561,21 @@ const detectRequestedModule = (
   return null;
 };
 
-export const runMockAssistant = (
-  request: AssistantCommandRequest,
-  safetyMode: SafetyMode,
-  allowedModules: AllowedModules
+const applyPolicyAndFilter = (
+  initialResponse: AssistantCommandResponse,
+  config: Pick<AppConfig, 'safetyMode' | 'allowedModules' | 'supportContactName'>
 ): AssistantCommandResponse => {
-  const normalized = request.command.trim().toLowerCase();
-  const requestedModule = detectRequestedModule(normalized);
-
-  if (requestedModule && !allowedModules[requestedModule]) {
-    return {
-      success: true,
-      riskLevel: 'blocked',
-      message:
-        'That section is currently turned off by support settings. You can ask support to enable it.',
-      actions: [
-        {
-          id: 'call_support',
-          label: 'Call Support',
-          description: 'Request access to this section.'
-        },
-        {
-          id: 'go_home',
-          label: 'Go Home',
-          description: 'Return to your main screen.'
-        }
-      ]
-    };
-  }
-
-  const scenario = scenarios.find((candidate) => candidate.matches(normalized));
-
-  if (!scenario) {
-    return fallbackResponse;
-  }
-
   const response: AssistantCommandResponse = {
-    success: true,
-    message: scenario.message,
-    riskLevel: scenario.riskLevel,
-    actions: scenario.actions
+    ...initialResponse,
+    actions: [...initialResponse.actions]
   };
 
-  if (safetyMode === 'strict' && response.riskLevel === 'caution') {
+  if (config.safetyMode === 'strict' && response.riskLevel === 'caution') {
     response.riskLevel = 'blocked';
     response.message =
       'Strict safety mode is on. This action is paused until a trusted support person reviews it.';
     response.actions = [
-      {
-        id: 'call_support',
-        label: 'Call Support',
-        description: 'Ask a trusted support person to review this action.'
-      },
+      callSupportAction(config.supportContactName),
       {
         id: 'go_home',
         label: 'Go Home',
@@ -340,32 +591,57 @@ export const runMockAssistant = (
       return true;
     }
 
-    return allowedModules[module];
+    return config.allowedModules[module];
   });
 
   if (filteredActions.length === 0) {
-    return {
-      success: true,
-      riskLevel: 'caution',
-      message:
-        'Available actions are limited by current support settings. You can go home or call support.',
-      actions: [
-        {
-          id: 'call_support',
-          label: 'Call Support',
-          description: 'Ask support to review or enable this feature.'
-        },
-        {
-          id: 'go_home',
-          label: 'Go Home',
-          description: 'Return to the main screen.'
-        }
-      ]
-    };
+    return limitedActionsResponse(config.supportContactName);
   }
 
   return {
     ...response,
     actions: filteredActions
   };
+};
+
+export const runMockAssistant = (
+  request: AssistantCommandRequest,
+  config: AppConfig
+): AssistantCommandResponse => {
+  const normalized = normalizeText(request.command);
+  const requestedModule = detectRequestedModule(normalized);
+
+  if (requestedModule && !config.allowedModules[requestedModule]) {
+    return moduleDisabledResponse(config.supportContactName);
+  }
+
+  const printerResponse = buildPrinterHelpResponse(normalized, config.supportContactName);
+
+  if (printerResponse) {
+    return applyPolicyAndFilter(printerResponse, config);
+  }
+
+  const callByNameResponse = buildCallByNameResponse(normalized, config);
+
+  if (callByNameResponse) {
+    return applyPolicyAndFilter(callByNameResponse, config);
+  }
+
+  const websiteShortcutResponse = buildWebsiteShortcutResponse(normalized, config);
+
+  if (websiteShortcutResponse) {
+    return applyPolicyAndFilter(websiteShortcutResponse, config);
+  }
+
+  const scenario = scenarios.find((candidate) => candidate.matches(normalized));
+  const response = scenario
+    ? {
+        success: true as const,
+        message: scenario.message,
+        riskLevel: scenario.riskLevel,
+        actions: scenario.actions
+      }
+    : fallbackResponse(config.supportContactName);
+
+  return applyPolicyAndFilter(response, config);
 };

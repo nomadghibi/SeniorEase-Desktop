@@ -96,6 +96,9 @@ Mock commands implemented:
 - Open my email
 - Read this email
 - Show my photos
+- Help with printer
+- Take me to my church website
+- Call Fred / Call support
 - Is this safe?
 - Call support
 

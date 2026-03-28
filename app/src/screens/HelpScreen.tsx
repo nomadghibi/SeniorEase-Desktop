@@ -1,13 +1,14 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import AssistantResponseCard from '@/components/AssistantResponseCard';
 import ScreenHeader from '@/components/ScreenHeader';
 import { sendAssistantCommand } from '@/lib/assistantClient';
 import { fetchSupportLogs, requestSupport } from '@/lib/supportClient';
+import { useConfigStore } from '@/store/configStore';
 import { useUiStore } from '@/store/uiStore';
 import type { AssistantAction, AssistantCommandResponse } from '@/types/assistant';
 import type { SupportLogEntry } from '@/types/support';
 
-const quickActions = [
+const baseQuickActions = [
   'Open my email',
   'Open internet',
   'Open Facebook',
@@ -15,6 +16,8 @@ const quickActions = [
   'Open family',
   'Read this email',
   'Show my photos',
+  'Take me to my church website',
+  'Help with printer',
   'Is this safe?',
   'Call support'
 ];
@@ -43,6 +46,7 @@ const starterResponse: AssistantCommandResponse = {
 };
 
 const HelpScreen = () => {
+  const supportContactName = useConfigStore((state) => state.config.supportContactName);
   const [command, setCommand] = useState('');
   const [response, setResponse] = useState<AssistantCommandResponse>(starterResponse);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +57,16 @@ const HelpScreen = () => {
 
   const goTo = useUiStore((state) => state.goTo);
   const goHome = useUiStore((state) => state.goHome);
+  const quickActions = useMemo(() => {
+    const supportLabel = supportContactName.trim();
+    const actions = [...baseQuickActions];
+
+    if (supportLabel.length > 0) {
+      actions.push(`Call ${supportLabel}`);
+    }
+
+    return actions;
+  }, [supportContactName]);
 
   const loadSupportLogs = async () => {
     try {

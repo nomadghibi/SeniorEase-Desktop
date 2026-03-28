@@ -34,6 +34,7 @@
 - Migrated browser favorites config from plain labels to structured entries (label/url/trusted).
 - Added interactive reminder actions on Home that persist through bridge config updates.
 - Added configurable web guardrails for direct website entry and untrusted favorites.
+- Assistant command handling now uses configured support/family/favorites context for named calls and trusted site shortcuts.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)
