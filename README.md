@@ -23,6 +23,7 @@ Current implementation includes:
 - Video Call module upgraded with family shortcuts, saved meetings, and confirmation prompts
 - Facebook module upgraded with guided actions and suspicious-message safety prompts
 - Help assistant now routes commands to Email/Photos/Internet/Facebook/Video Call/Family modules
+- Help screen now supports optional voice command capture (browser speech API)
 
 ## Project Structure
 

@@ -28,6 +28,7 @@
 - Replaced video call placeholder with family call shortcuts, saved meeting links, and guarded launch actions.
 - Replaced Facebook placeholder with guided shortcuts and suspicious-content escalation prompts.
 - Expanded assistant mock command coverage across all primary modules.
+- Added optional voice input path in Help using browser speech recognition APIs.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

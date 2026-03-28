@@ -46,6 +46,7 @@ const HelpScreen = () => {
   const [command, setCommand] = useState('');
   const [response, setResponse] = useState<AssistantCommandResponse>(starterResponse);
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [supportNotice, setSupportNotice] = useState<string | null>(null);
   const [supportLogs, setSupportLogs] = useState<SupportLogEntry[]>([]);
@@ -130,6 +131,61 @@ const HelpScreen = () => {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void requestCommand(command);
+  };
+
+  const startVoiceInput = () => {
+    const speechApi = window as unknown as {
+      SpeechRecognition?: new () => {
+        lang: string;
+        interimResults: boolean;
+        maxAlternatives: number;
+        onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+        onerror: ((event: { error?: string }) => void) | null;
+        onend: (() => void) | null;
+        start: () => void;
+      };
+      webkitSpeechRecognition?: new () => {
+        lang: string;
+        interimResults: boolean;
+        maxAlternatives: number;
+        onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+        onerror: ((event: { error?: string }) => void) | null;
+        onend: (() => void) | null;
+        start: () => void;
+      };
+    };
+
+    const Recognition = speechApi.SpeechRecognition ?? speechApi.webkitSpeechRecognition;
+
+    if (!Recognition) {
+      setErrorMessage('Voice input is not available in this environment.');
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsListening(true);
+
+    const recognition = new Recognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const spoken = event.results[0]?.[0]?.transcript?.trim() ?? '';
+
+      if (!spoken) {
+        return;
+      }
+
+      setCommand(spoken);
+      void requestCommand(spoken);
+    };
+    recognition.onerror = (event) => {
+      setErrorMessage(`Voice input failed${event.error ? `: ${event.error}` : '.'}`);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    recognition.start();
   };
 
   const handleAction = (action: AssistantAction) => {
@@ -219,6 +275,14 @@ const HelpScreen = () => {
               disabled={isLoading}
             >
               {isLoading ? 'Checking...' : 'Get Help'}
+            </button>
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              disabled={isLoading || isListening}
+              className="rounded-2xl border-2 border-[#315740] bg-white px-6 py-4 text-xl font-semibold text-[#1f3b2c] disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              {isListening ? 'Listening...' : 'Use Voice'}
             </button>
           </div>
         </form>
