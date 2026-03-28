@@ -33,6 +33,7 @@ const App = () => {
   const loadConfig = useConfigStore((state) => state.loadConfig);
   const allowedModules = useConfigStore((state) => state.config.allowedModules);
   const requireAdminPin = useConfigStore((state) => state.config.requireAdminPin);
+  const adminPinConfigured = useConfigStore((state) => state.config.adminPinConfigured);
   const isSettingsUnlocked = useAdminStore((state) => state.isSettingsUnlocked);
   const lockSettings = useAdminStore((state) => state.lockSettings);
 
@@ -55,7 +56,12 @@ const App = () => {
     }
   }, [allowedModules, currentScreen, goHome, lockSettings]);
 
-  if (currentScreen === 'settings' && requireAdminPin && !isSettingsUnlocked) {
+  if (
+    currentScreen === 'settings' &&
+    requireAdminPin &&
+    adminPinConfigured &&
+    !isSettingsUnlocked
+  ) {
     return (
       <AppShell>
         <SettingsLockScreen />
