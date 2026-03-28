@@ -113,7 +113,11 @@ const startDesktop = () => {
   const child = spawn('npm', ['run', 'dev:desktop'], {
     cwd: repoRoot,
     stdio: 'inherit',
-    env: process.env
+    env: {
+      ...process.env,
+      ASSISTANT_PROVIDER: process.env.ASSISTANT_PROVIDER ?? 'anythingllm',
+      ANYTHINGLLM_URL: process.env.ANYTHINGLLM_URL ?? anythingUrl
+    }
   });
 
   const forwardSignal = (signal) => {
@@ -143,4 +147,3 @@ try {
   console.error(`[dev-all] ${message}`);
   process.exit(1);
 }
-

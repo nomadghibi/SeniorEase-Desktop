@@ -21,10 +21,10 @@ const SettingsLockScreen = () => {
     setIsVerifying(true);
 
     try {
-      const isValid = await verifyAdminPin(candidate);
+      const result = await verifyAdminPin(candidate);
 
-      if (isValid) {
-        unlockSettings();
+      if (result.valid && result.adminToken) {
+        unlockSettings(result.adminToken);
         setPin('');
         setErrorMessage(null);
         return;

@@ -6,12 +6,14 @@ const bridgeBaseUrl = (import.meta.env.VITE_BRIDGE_URL ?? 'http://localhost:8787
 type VerifyPinResponse = {
   success: boolean;
   valid: boolean;
+  adminToken?: string;
+  expiresInSeconds?: number;
 };
 
 export const verifyAdminPin = async (
   pin: string,
   signal?: AbortSignal
-): Promise<boolean> => {
+): Promise<{ valid: boolean; adminToken: string | null; expiresInSeconds: number | null }> => {
   const response = await fetch(`${bridgeBaseUrl}/admin/verify-pin`, {
     method: 'POST',
     headers: {
@@ -26,5 +28,15 @@ export const verifyAdminPin = async (
   }
 
   const result = (await response.json()) as VerifyPinResponse;
-  return result.valid === true;
+  const rawToken = typeof result.adminToken === 'string' ? result.adminToken.trim() : '';
+  const hasToken = rawToken.length > 0;
+
+  return {
+    valid: result.valid === true && hasToken,
+    adminToken: hasToken ? rawToken : null,
+    expiresInSeconds:
+      typeof result.expiresInSeconds === 'number' && Number.isFinite(result.expiresInSeconds)
+        ? result.expiresInSeconds
+        : null
+  };
 };

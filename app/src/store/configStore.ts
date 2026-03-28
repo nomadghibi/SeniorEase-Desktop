@@ -96,11 +96,14 @@ export const useConfigStore = create<ConfigState>((set) => ({
         isLoading: false,
         errorMessage: null
       });
-    } catch {
+    } catch (error) {
       useUiStore.getState().setReminderCount(defaultConfig.reminders.length);
       set({
         isLoading: false,
-        errorMessage: 'Could not load remote config. Using local defaults.'
+        errorMessage:
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'Could not load remote config. Using local defaults.'
       });
     }
   },
@@ -116,10 +119,13 @@ export const useConfigStore = create<ConfigState>((set) => ({
         errorMessage: null
       });
       return true;
-    } catch {
+    } catch (error) {
       set({
         isSaving: false,
-        errorMessage: 'Could not save settings. Please try again.'
+        errorMessage:
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'Could not save settings. Please try again.'
       });
       return false;
     }
@@ -136,10 +142,13 @@ export const useConfigStore = create<ConfigState>((set) => ({
         errorMessage: null
       });
       return true;
-    } catch {
+    } catch (error) {
       set({
         isSaving: false,
-        errorMessage: 'Could not reset settings right now.'
+        errorMessage:
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'Could not reset settings right now.'
       });
       return false;
     }

@@ -65,24 +65,21 @@ npm --prefix app install
 npm --prefix bridge install
 ```
 
-4. Make sure Docker Desktop is running (required for local AnythingLLM container).
-
-5. Start full local stack (AnythingLLM + bridge + desktop app):
+4. Start the desktop app + bridge (mock assistant by default):
 
 ```powershell
 npm run dev
 ```
 
 Services started:
-- AnythingLLM: `http://localhost:3001`
 - Bridge API: `http://localhost:8787`
 - Vite renderer: `http://localhost:5173`
 - Electron window: opens automatically in fullscreen
 
-Fallback if you do not want auto-container startup:
+Optional: start full stack with local AnythingLLM + Docker:
 
 ```powershell
-npm run dev:desktop
+npm run dev:anythingllm
 ```
 
 ## Helpful Commands
@@ -147,7 +144,8 @@ Sample config update payload:
 
 ## Notes
 
-- Bridge dev/start scripts now run with `ASSISTANT_PROVIDER=anythingllm` by default.
+- Bridge defaults to `ASSISTANT_PROVIDER=mock`.
+- To opt into AnythingLLM, set `ASSISTANT_PROVIDER=anythingllm` (or use `npm run dev:anythingllm`).
 - AnythingLLM adapter env vars:
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
   - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)

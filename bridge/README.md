@@ -18,9 +18,17 @@ Default URL: `http://localhost:8787`
 - `GET /config`
 - `POST /config`
 - `POST /config/reset`
+- `POST /admin/verify-pin`
 - `POST /support/request`
 - `GET /support/logs`
 - `POST /support/logs/:id/close`
+
+## Admin-Protected Writes
+
+- `POST /config` requires `x-admin-token` when changing protected fields and PIN lock is enabled.
+- Reminder-only updates are allowed without admin token (for home-screen reminder actions).
+- `POST /config/reset` requires `x-admin-token` when PIN lock is enabled.
+- Obtain token from `POST /admin/verify-pin`.
 
 The bridge currently uses:
 - a mock assistant service designed for safe, typed responses

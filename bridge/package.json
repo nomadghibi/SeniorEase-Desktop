@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/run-with-anythingllm-provider.mjs tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "dev:anythingllm": "node scripts/run-with-anythingllm-provider.mjs tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node scripts/run-with-anythingllm-provider.mjs node dist/server.js",
+    "start": "node dist/server.js",
+    "start:anythingllm": "node scripts/run-with-anythingllm-provider.mjs node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -12,10 +12,29 @@ import {
 
 const app = express();
 const port = Number(process.env.BRIDGE_PORT ?? 8787);
+const host = process.env.BRIDGE_HOST ?? '127.0.0.1';
+const allowedOrigins = (
+  process.env.CORS_ORIGIN ??
+  'http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173'
+)
+  .split(',')
+  .map((value) => value.trim())
+  .filter((value) => value.length > 0);
+
+const isOriginAllowed = (origin: string | undefined): boolean => {
+  // Allow non-browser and desktop file-based clients.
+  if (!origin || origin === 'null') {
+    return true;
+  }
+
+  return allowedOrigins.includes(origin);
+};
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? true,
+    origin(origin, callback) {
+      callback(null, isOriginAllowed(origin));
+    },
     credentials: false
   })
 );
@@ -45,6 +64,6 @@ app.use((error: unknown, _request: express.Request, response: express.Response, 
   });
 });
 
-app.listen(port, () => {
-  console.log(`SeniorEase bridge listening on http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`SeniorEase bridge listening on http://${host}:${port}`);
 });

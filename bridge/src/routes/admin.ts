@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { verifyAdminPin } from '../services/configStore.js';
+import { createAdminSession } from '../services/adminSessionStore.js';
 
 const adminRouter = Router();
 
@@ -23,9 +24,21 @@ adminRouter.post('/verify-pin', async (request, response, next) => {
   try {
     const valid = await verifyAdminPin(parsed.data.pin);
 
+    if (!valid) {
+      response.json({
+        success: true,
+        valid: false
+      });
+      return;
+    }
+
+    const session = createAdminSession();
+
     response.json({
       success: true,
-      valid
+      valid: true,
+      adminToken: session.token,
+      expiresInSeconds: session.expiresInSeconds
     });
   } catch (error) {
     next(error);

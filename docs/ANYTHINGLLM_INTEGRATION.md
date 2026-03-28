@@ -28,7 +28,7 @@ AnythingLLM integration is intentionally staged after launcher and bridge contra
 ## API Endpoints and Runtime Toggles
 - Bridge contract remains stable: `POST /assistant/command`
 - Bridge adapter env vars (canonical):
-  - `ASSISTANT_PROVIDER=mock|anythingllm` (bridge scripts default to `anythingllm`)
+  - `ASSISTANT_PROVIDER=mock|anythingllm` (default is `mock`; opt into AnythingLLM explicitly)
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
   - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)
   - `ANYTHINGLLM_API_KEY` (optional, recommended for secured deployments; env-only)

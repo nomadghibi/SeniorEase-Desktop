@@ -2,7 +2,8 @@
   "name": "seniorease-desktop",
   "private": true,
   "scripts": {
-    "dev": "node scripts/dev-all.mjs",
+    "dev": "npm run dev:desktop",
+    "dev:anythingllm": "node scripts/dev-all.mjs",
     "dev:desktop": "concurrently -k \"npm --prefix bridge run dev\" \"npm --prefix app run dev\"",
     "build": "npm --prefix bridge run build && npm --prefix app run build",
     "typecheck": "npm --prefix bridge run typecheck && npm --prefix app run typecheck"

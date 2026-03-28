@@ -86,6 +86,7 @@ class ResilientAssistantAdapter implements AssistantAdapter {
       : null;
     const missingUrl =
       this.lastError?.includes('URL is missing') ?? false;
+    const hasActiveError = this.lastError !== null;
 
     return {
       configuredProvider: this.configuredProvider,
@@ -95,7 +96,8 @@ class ResilientAssistantAdapter implements AssistantAdapter {
         this.configuredProvider === 'anythingllm' &&
         this.anythingLlmAdapter !== null &&
         fallbackUntil === null &&
-        !missingUrl,
+        !missingUrl &&
+        !hasActiveError,
       consecutiveFailures: this.consecutiveFailures,
       fallbackUntil,
       lastError: this.lastError
