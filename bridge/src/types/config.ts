@@ -32,6 +32,18 @@ export const moduleVisibilitySchema = z.object({
   settings: z.boolean()
 });
 
+export const storedAppConfigSchema = z.object({
+  reminders: z.array(reminderSchema),
+  internetFavorites: z.array(websiteFavoriteSchema),
+  familyContacts: z.array(familyContactSchema),
+  supportContactName: z.string().min(1),
+  safetyMode: z.enum(['standard', 'strict']),
+  requireAdminPin: z.boolean(),
+  adminPinHash: z.string().min(32),
+  allowedModules: moduleVisibilitySchema,
+  updatedAt: z.string().min(1)
+});
+
 export const appConfigSchema = z.object({
   reminders: z.array(reminderSchema),
   internetFavorites: z.array(websiteFavoriteSchema),
@@ -39,7 +51,7 @@ export const appConfigSchema = z.object({
   supportContactName: z.string().min(1),
   safetyMode: z.enum(['standard', 'strict']),
   requireAdminPin: z.boolean(),
-  adminPin: z.string().regex(/^\d{4,8}$/),
+  adminPinConfigured: z.boolean(),
   allowedModules: moduleVisibilitySchema,
   updatedAt: z.string().min(1)
 });
@@ -57,5 +69,6 @@ export const appConfigPatchSchema = z
   })
   .strict();
 
+export type StoredAppConfig = z.infer<typeof storedAppConfigSchema>;
 export type AppConfig = z.infer<typeof appConfigSchema>;
 export type AppConfigPatch = z.infer<typeof appConfigPatchSchema>;

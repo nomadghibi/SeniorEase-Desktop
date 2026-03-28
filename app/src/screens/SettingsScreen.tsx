@@ -104,6 +104,11 @@ const SettingsScreen = () => {
       return;
     }
 
+    if (requireAdminPin && !config.adminPinConfigured && newAdminPin.length === 0) {
+      setStatusMessage('Set a new admin PIN before enabling PIN lock.');
+      return;
+    }
+
     const nextReminders = reminders
       .map((item) => ({
         id: item.id || createId('reminder'),
@@ -131,20 +136,25 @@ const SettingsScreen = () => {
       }))
       .filter((item) => item.name.length > 0 && item.relation.length > 0);
 
-    const saved = await saveConfigPatch({
+    const patch: AppConfigPatch = {
       reminders: nextReminders,
       internetFavorites: nextFavorites,
       familyContacts: nextContacts,
       supportContactName: supportContactName.trim() || 'Support',
       safetyMode,
       requireAdminPin,
-      adminPin: newAdminPin.length > 0 ? newAdminPin : config.adminPin,
       allowedModules: {
         ...allowedModules,
         help: true,
         settings: true
       }
-    });
+    };
+
+    if (newAdminPin.length > 0) {
+      patch.adminPin = newAdminPin;
+    }
+
+    const saved = await saveConfigPatch(patch);
 
     setStatusMessage(saved ? 'Settings saved.' : 'Could not save settings right now.');
     if (saved) {

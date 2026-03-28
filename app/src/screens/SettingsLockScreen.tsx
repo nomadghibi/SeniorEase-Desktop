@@ -1,25 +1,41 @@
 import { FormEvent, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useConfigStore } from '@/store/configStore';
+import { verifyAdminPin } from '@/lib/adminClient';
 import { useAdminStore } from '@/store/adminStore';
 
 const SettingsLockScreen = () => {
   const [pin, setPin] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const config = useConfigStore((state) => state.config);
   const unlockSettings = useAdminStore((state) => state.unlockSettings);
 
-  const handleUnlock = (event: FormEvent<HTMLFormElement>) => {
+  const handleUnlock = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const candidate = pin.trim();
 
-    if (pin.trim() === config.adminPin) {
-      unlockSettings();
-      setPin('');
-      setErrorMessage(null);
+    if (!/^\d{4,8}$/.test(candidate)) {
+      setErrorMessage('Enter a 4 to 8 digit PIN.');
       return;
     }
 
-    setErrorMessage('PIN is incorrect. Please try again.');
+    setIsVerifying(true);
+
+    try {
+      const isValid = await verifyAdminPin(candidate);
+
+      if (isValid) {
+        unlockSettings();
+        setPin('');
+        setErrorMessage(null);
+        return;
+      }
+
+      setErrorMessage('PIN is incorrect. Please try again.');
+    } catch {
+      setErrorMessage('Could not verify PIN right now. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -49,9 +65,10 @@ const SettingsLockScreen = () => {
             />
             <button
               type="submit"
-              className="rounded-2xl border-2 border-[#2d5d42] bg-[#2d5d42] px-6 py-4 text-xl font-semibold text-white"
+              disabled={isVerifying}
+              className="rounded-2xl border-2 border-[#2d5d42] bg-[#2d5d42] px-6 py-4 text-xl font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Unlock
+              {isVerifying ? 'Checking...' : 'Unlock'}
             </button>
           </div>
         </form>

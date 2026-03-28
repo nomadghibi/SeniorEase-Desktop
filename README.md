@@ -73,6 +73,7 @@ Endpoint:
 - `GET /config`
 - `POST /config`
 - `POST /config/reset`
+- `POST /admin/verify-pin`
 - `POST /support/request`
 - `GET /support/logs`
 - `POST /support/logs/:id/close`
@@ -107,6 +108,8 @@ Sample config update payload:
   "adminPin": "2468"
 }
 ```
+
+`GET /config` responses expose `adminPinConfigured` and never include a plain-text PIN.
 
 ## Notes
 

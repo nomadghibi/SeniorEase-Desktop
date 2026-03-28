@@ -1,8 +1,13 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { AppConfig, AppConfigPatch } from '../types/config.js';
-import { appConfigSchema } from '../types/config.js';
+import type {
+  AppConfig,
+  AppConfigPatch,
+  StoredAppConfig
+} from '../types/config.js';
+import { storedAppConfigSchema } from '../types/config.js';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
@@ -33,10 +38,16 @@ const ensureHttpsUrl = (value: string): string => {
   return `https://${trimmed}`;
 };
 
+const hashAdminPin = (pin: string): string => {
+  return createHash('sha256')
+    .update(`seniorease-admin-pin:${pin}`)
+    .digest('hex');
+};
+
 const normalizeFavorite = (
   entry: unknown,
   index: number
-): AppConfig['internetFavorites'][number] | null => {
+): StoredAppConfig['internetFavorites'][number] | null => {
   if (typeof entry === 'string') {
     const label = entry.trim();
 
@@ -79,7 +90,7 @@ const normalizeFavorite = (
   };
 };
 
-const defaultConfig: AppConfig = {
+const defaultStoredConfig: StoredAppConfig = {
   reminders: [
     { id: 'medication-1', text: 'Take morning medication at 9:00 AM', dueAt: '09:00' },
     { id: 'call-family-1', text: 'Call Anna this evening', dueAt: '18:30' }
@@ -130,7 +141,7 @@ const defaultConfig: AppConfig = {
   supportContactName: 'Fred',
   safetyMode: 'standard',
   requireAdminPin: true,
-  adminPin: '1234',
+  adminPinHash: hashAdminPin('1234'),
   allowedModules: {
     email: true,
     photos: true,
@@ -148,54 +159,73 @@ const ensureDataDirectory = async (): Promise<void> => {
   await mkdir(dataDirectory, { recursive: true });
 };
 
-const writeConfig = async (config: AppConfig): Promise<void> => {
+const writeStoredConfig = async (config: StoredAppConfig): Promise<void> => {
   await ensureDataDirectory();
   await writeFile(configFilePath, JSON.stringify(config, null, 2), 'utf-8');
 };
 
-const migrateConfig = (input: unknown): AppConfig => {
+const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
+  return {
+    reminders: stored.reminders,
+    internetFavorites: stored.internetFavorites,
+    familyContacts: stored.familyContacts,
+    supportContactName: stored.supportContactName,
+    safetyMode: stored.safetyMode,
+    requireAdminPin: stored.requireAdminPin,
+    adminPinConfigured: stored.adminPinHash.length > 0,
+    allowedModules: stored.allowedModules,
+    updatedAt: stored.updatedAt
+  };
+};
+
+const migrateStoredConfig = (input: unknown): StoredAppConfig => {
   if (!input || typeof input !== 'object') {
-    return defaultConfig;
+    return defaultStoredConfig;
   }
 
-  const partial = input as Partial<AppConfig> & {
-    allowedModules?: Partial<AppConfig['allowedModules']>;
+  const partial = input as Partial<StoredAppConfig> & {
+    allowedModules?: Partial<StoredAppConfig['allowedModules']>;
     internetFavorites?: unknown[];
+    adminPin?: unknown;
   };
 
   const normalizedFavorites = Array.isArray(partial.internetFavorites)
     ? partial.internetFavorites
         .map((entry, index) => normalizeFavorite(entry, index))
         .filter(
-          (entry): entry is AppConfig['internetFavorites'][number] =>
+          (entry): entry is StoredAppConfig['internetFavorites'][number] =>
             entry !== null
         )
     : [];
 
+  const adminPinHash =
+    typeof partial.adminPinHash === 'string' && partial.adminPinHash.trim().length >= 32
+      ? partial.adminPinHash
+      : typeof partial.adminPin === 'string' && /^\d{4,8}$/.test(partial.adminPin)
+        ? hashAdminPin(partial.adminPin)
+        : defaultStoredConfig.adminPinHash;
+
   return {
-    reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultConfig.reminders,
+    reminders: Array.isArray(partial.reminders) ? partial.reminders : defaultStoredConfig.reminders,
     internetFavorites:
       normalizedFavorites.length > 0
         ? normalizedFavorites
-        : defaultConfig.internetFavorites,
+        : defaultStoredConfig.internetFavorites,
     familyContacts: Array.isArray(partial.familyContacts)
       ? partial.familyContacts
-      : defaultConfig.familyContacts,
+      : defaultStoredConfig.familyContacts,
     supportContactName:
       typeof partial.supportContactName === 'string' && partial.supportContactName.trim().length > 0
         ? partial.supportContactName
-        : defaultConfig.supportContactName,
+        : defaultStoredConfig.supportContactName,
     safetyMode: partial.safetyMode === 'strict' ? 'strict' : 'standard',
     requireAdminPin:
       typeof partial.requireAdminPin === 'boolean'
         ? partial.requireAdminPin
-        : defaultConfig.requireAdminPin,
-    adminPin:
-      typeof partial.adminPin === 'string' && /^\d{4,8}$/.test(partial.adminPin)
-        ? partial.adminPin
-        : defaultConfig.adminPin,
+        : defaultStoredConfig.requireAdminPin,
+    adminPinHash,
     allowedModules: {
-      ...defaultConfig.allowedModules,
+      ...defaultStoredConfig.allowedModules,
       ...(partial.allowedModules ?? {}),
       help: true,
       settings: true
@@ -204,27 +234,32 @@ const migrateConfig = (input: unknown): AppConfig => {
   };
 };
 
-export const getConfig = async (): Promise<AppConfig> => {
+const getStoredConfig = async (): Promise<StoredAppConfig> => {
   try {
     const raw = await readFile(configFilePath, 'utf-8');
     const parsed = JSON.parse(raw);
-    const validated = appConfigSchema.safeParse(parsed);
+    const validated = storedAppConfigSchema.safeParse(parsed);
 
     if (validated.success) {
       return validated.data;
     }
 
-    const migrated = migrateConfig(parsed);
-    await writeConfig(migrated);
+    const migrated = migrateStoredConfig(parsed);
+    await writeStoredConfig(migrated);
     return migrated;
   } catch {
-    await writeConfig(defaultConfig);
-    return defaultConfig;
+    await writeStoredConfig(defaultStoredConfig);
+    return defaultStoredConfig;
   }
 };
 
+export const getConfig = async (): Promise<AppConfig> => {
+  const stored = await getStoredConfig();
+  return toPublicConfig(stored);
+};
+
 export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> => {
-  const existing = await getConfig();
+  const existing = await getStoredConfig();
 
   const nextAllowedModules = patch.allowedModules
     ? {
@@ -235,24 +270,39 @@ export const updateConfig = async (patch: AppConfigPatch): Promise<AppConfig> =>
       }
     : existing.allowedModules;
 
-  const merged: AppConfig = {
+  const { adminPin, allowedModules: _allowedModules, ...restPatch } = patch;
+
+  const merged: StoredAppConfig = {
     ...existing,
-    ...patch,
+    ...restPatch,
+    adminPinHash: adminPin ? hashAdminPin(adminPin) : existing.adminPinHash,
     allowedModules: nextAllowedModules,
     updatedAt: new Date().toISOString()
   };
 
-  await writeConfig(merged);
+  await writeStoredConfig(merged);
 
-  return merged;
+  return toPublicConfig(merged);
 };
 
 export const resetConfig = async (): Promise<AppConfig> => {
-  const next: AppConfig = {
-    ...defaultConfig,
+  const next: StoredAppConfig = {
+    ...defaultStoredConfig,
     updatedAt: new Date().toISOString()
   };
 
-  await writeConfig(next);
-  return next;
+  await writeStoredConfig(next);
+  return toPublicConfig(next);
+};
+
+export const verifyAdminPin = async (pin: string): Promise<boolean> => {
+  const stored = await getStoredConfig();
+  const storedHash = Buffer.from(stored.adminPinHash, 'utf-8');
+  const incomingHash = Buffer.from(hashAdminPin(pin), 'utf-8');
+
+  if (storedHash.length !== incomingHash.length) {
+    return false;
+  }
+
+  return timingSafeEqual(storedHash, incomingHash);
 };

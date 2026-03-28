@@ -26,7 +26,7 @@ export type AppConfig = {
   supportContactName: string;
   safetyMode: 'standard' | 'strict';
   requireAdminPin: boolean;
-  adminPin: string;
+  adminPinConfigured: boolean;
   allowedModules: {
     email: boolean;
     photos: boolean;
@@ -40,6 +40,9 @@ export type AppConfig = {
   updatedAt: string;
 };
 
-export type AppConfigPatch = Partial<Omit<AppConfig, 'updatedAt' | 'allowedModules'>> & {
+export type AppConfigPatch = Partial<
+  Omit<AppConfig, 'updatedAt' | 'allowedModules' | 'adminPinConfigured'>
+> & {
+  adminPin?: string;
   allowedModules?: Partial<AppConfig['allowedModules']>;
 };

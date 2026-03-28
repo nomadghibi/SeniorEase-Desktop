@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import adminRouter from './routes/admin.js';
 import assistantRouter from './routes/assistant.js';
 import configRouter from './routes/config.js';
 import supportRouter from './routes/support.js';
@@ -24,6 +25,7 @@ app.get('/health', (_request, response) => {
 
 app.use('/assistant', assistantRouter);
 app.use('/config', configRouter);
+app.use('/admin', adminRouter);
 app.use('/support', supportRouter);
 
 app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {

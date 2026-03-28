@@ -10,6 +10,7 @@
 - Added `POST /assistant/command` API with typed structured responses.
 - Added `GET /config` and `POST /config` APIs backed by local JSON storage.
 - Added `POST /config/reset` for restoring safe default configuration.
+- Added `POST /admin/verify-pin` so PIN checks happen server-side.
 - Added `POST /support/request` and `GET /support/logs` for support escalation tracking.
 - Added `POST /support/logs/:id/close` for admin ticket lifecycle control.
 - Help screen now uses bridge responses and risk-level UI banners.
@@ -20,6 +21,7 @@
 - Added module visibility policy controls and strict safety-mode assistant behavior.
 - Settings now includes a support activity panel for closing open tickets.
 - Added a config-driven admin PIN gate for opening Settings.
+- Config API now returns `adminPinConfigured` only; PIN values are hashed at rest and never returned.
 - Added a global safety-mode banner and strict-mode blocking for direct unknown web entry.
 - Replaced email placeholder with guided inbox/read/reply flow including suspicious-email warning states.
 - Family contact actions now route into core modules and respect module visibility policies.
