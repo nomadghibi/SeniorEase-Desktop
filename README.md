@@ -25,6 +25,7 @@ Current implementation includes:
 - Help assistant now routes commands to Email/Photos/Internet/Facebook/Video Call/Family modules
 - Help screen now supports optional voice command capture (browser speech API)
 - Internet favorites now use label + URL + trusted flags with stricter open-site safety checks
+- Home screen reminders are now interactive (snooze/mark-done) with config persistence
 
 ## Project Structure
 
