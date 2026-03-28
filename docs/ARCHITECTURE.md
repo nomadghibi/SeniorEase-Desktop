@@ -38,6 +38,7 @@
 - Family screen now supports direct email/message/call actions using saved contact details.
 - Added bridge weather endpoint and top-bar weather display driven by configured ZIP code.
 - Added a pluggable assistant adapter layer so mock logic can be swapped for OpenClaw integration later.
+- Added assistant session memory in bridge for command follow-ups within the same `sessionId`.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

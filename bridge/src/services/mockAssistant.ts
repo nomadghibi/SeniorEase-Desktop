@@ -1,4 +1,7 @@
 import type {
+  AssistantExecutionResult,
+  AssistantSessionSnapshot,
+  AssistantSessionUpdate,
   AssistantAction,
   AssistantCommandRequest,
   AssistantCommandResponse,
@@ -561,6 +564,205 @@ const detectRequestedModule = (
   return null;
 };
 
+const followUpCommandSet = new Set([
+  'open it',
+  'do it',
+  'continue',
+  'go ahead',
+  'yes',
+  'yes please',
+  'ok',
+  'okay'
+]);
+
+const buildContinuationResponse = (
+  actionId: string,
+  session: AssistantSessionSnapshot | null,
+  config: AppConfig
+): AssistantCommandResponse | null => {
+  const contactName = session?.lastContactName?.trim();
+  const supportAction = callSupportAction(config.supportContactName);
+
+  switch (actionId) {
+    case 'open_email':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: 'Continuing your last step. I can open Email now.',
+        actions: [
+          {
+            id: 'open_email',
+            label: 'Open Email',
+            description: 'Go to your Email screen.'
+          },
+          {
+            id: 'go_home',
+            label: 'Go Home',
+            description: 'Return to the main screen.'
+          }
+        ]
+      };
+    case 'open_photos':
+    case 'show_photos':
+    case 'start_slideshow':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: 'Continuing your last step. I can open Photos now.',
+        actions: [
+          {
+            id: 'open_photos',
+            label: 'Open Photos',
+            description: 'Go to your Photos screen.'
+          },
+          {
+            id: 'start_slideshow',
+            label: 'Start Slideshow',
+            description: 'Play photos one by one in full size.'
+          }
+        ]
+      };
+    case 'open_internet':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: 'Continuing your last step. I can open Internet now.',
+        actions: [
+          {
+            id: 'open_internet',
+            label: 'Open Internet',
+            description: 'Go to the Internet screen.'
+          },
+          {
+            id: 'go_home',
+            label: 'Go Home',
+            description: 'Return to the main screen.'
+          }
+        ]
+      };
+    case 'open_facebook':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: 'Continuing your last step. I can open Facebook now.',
+        actions: [
+          {
+            id: 'open_facebook',
+            label: 'Open Facebook',
+            description: 'Go to the Facebook screen.'
+          },
+          {
+            id: 'go_home',
+            label: 'Go Home',
+            description: 'Return to the main screen.'
+          }
+        ]
+      };
+    case 'open_family':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: 'Continuing your last step. I can open Family now.',
+        actions: [
+          {
+            id: 'open_family',
+            label: 'Open Family',
+            description: 'Go to your Family screen.'
+          },
+          {
+            id: 'go_home',
+            label: 'Go Home',
+            description: 'Return to the main screen.'
+          }
+        ]
+      };
+    case 'open_videocall':
+      return {
+        success: true,
+        riskLevel: 'safe',
+        message: contactName
+          ? `Continuing your last step. I can open Video Call for ${contactName}.`
+          : 'Continuing your last step. I can open Video Call now.',
+        actions: [
+          {
+            id: 'open_videocall',
+            label: 'Open Video Call',
+            description: contactName
+              ? `Go to Video Call and contact ${contactName}.`
+              : 'Go to your Video Call screen.'
+          },
+          {
+            id: 'go_home',
+            label: 'Go Home',
+            description: 'Return to the main screen.'
+          }
+        ]
+      };
+    case 'call_support':
+    case 'contact_support':
+    case 'blocked_contact_support':
+      return {
+        success: true,
+        riskLevel: 'caution',
+        message: 'Continuing your last step. I can contact support now.',
+        actions: [
+          supportAction,
+          {
+            id: 'share_screen',
+            label: 'Share Screen',
+            description: 'Let support guide you live.',
+            requiresConfirmation: true
+          }
+        ]
+      };
+    default:
+      return null;
+  }
+};
+
+const buildSessionFollowUpResponse = (
+  normalizedInput: string,
+  session: AssistantSessionSnapshot | null,
+  config: AppConfig
+): AssistantCommandResponse | null => {
+  if (!session) {
+    return null;
+  }
+
+  const asksSafetyCheck = normalizedInput.includes('is this safe') || normalizedInput.includes('safe?');
+
+  if (asksSafetyCheck && session.lastIntent === 'website' && session.lastFavoriteLabel) {
+    return {
+      success: true,
+      riskLevel: 'caution',
+      message: `${session.lastFavoriteLabel} should be checked first. Avoid entering personal details unless support confirms it is safe.`,
+      actions: [
+        {
+          id: 'scan_for_risk',
+          label: 'Check Safety',
+          description: 'Review common scam warning signs.'
+        },
+        callSupportAction(config.supportContactName)
+      ]
+    };
+  }
+
+  if (
+    (normalizedInput.includes('call him') ||
+      normalizedInput.includes('call her') ||
+      normalizedInput.includes('call them')) &&
+    session.lastContactName
+  ) {
+    return buildCallByNameResponse(normalizeText(`call ${session.lastContactName}`), config);
+  }
+
+  if (followUpCommandSet.has(normalizedInput) && session.lastActionId) {
+    return buildContinuationResponse(session.lastActionId, session, config);
+  }
+
+  return null;
+};
+
 const applyPolicyAndFilter = (
   initialResponse: AssistantCommandResponse,
   config: Pick<AppConfig, 'safetyMode' | 'allowedModules' | 'supportContactName'>
@@ -604,33 +806,105 @@ const applyPolicyAndFilter = (
   };
 };
 
+const inferSessionUpdate = (
+  normalizedInput: string,
+  response: AssistantCommandResponse,
+  config: AppConfig,
+  session: AssistantSessionSnapshot | null
+): AssistantSessionUpdate => {
+  const primaryActionId = response.actions[0]?.id ?? session?.lastActionId;
+  const update: AssistantSessionUpdate = {};
+
+  if (!primaryActionId) {
+    return update;
+  }
+
+  update.lastActionId = primaryActionId;
+
+  if (
+    primaryActionId === 'call_support' ||
+    primaryActionId === 'contact_support' ||
+    primaryActionId === 'blocked_contact_support' ||
+    primaryActionId === 'share_screen'
+  ) {
+    update.lastIntent = 'support';
+    return update;
+  }
+
+  if (primaryActionId === 'open_internet') {
+    update.lastIntent = 'website';
+    const favorite = findFavoriteFromInput(normalizedInput, config.internetFavorites);
+    update.lastFavoriteLabel = favorite?.label ?? session?.lastFavoriteLabel;
+    return update;
+  }
+
+  if (primaryActionId === 'open_videocall') {
+    update.lastIntent = 'call';
+    const target = extractCallTarget(normalizedInput);
+    const contact =
+      target !== null ? findFamilyContactFromTarget(target, config.familyContacts) : null;
+    update.lastContactName = contact?.name ?? session?.lastContactName;
+    return update;
+  }
+
+  if (
+    primaryActionId.startsWith('open_') ||
+    primaryActionId === 'show_photos' ||
+    primaryActionId === 'start_slideshow' ||
+    primaryActionId === 'read_aloud' ||
+    primaryActionId === 'summarize_email'
+  ) {
+    update.lastIntent = 'module';
+    return update;
+  }
+
+  update.lastIntent = 'unknown';
+  return update;
+};
+
 export const runMockAssistant = (
   request: AssistantCommandRequest,
-  config: AppConfig
-): AssistantCommandResponse => {
+  config: AppConfig,
+  session: AssistantSessionSnapshot | null = null
+): AssistantExecutionResult => {
   const normalized = normalizeText(request.command);
+  const finalize = (raw: AssistantCommandResponse): AssistantExecutionResult => {
+    const response = applyPolicyAndFilter(raw, config);
+    const sessionUpdate = inferSessionUpdate(normalized, response, config, session);
+    return {
+      response,
+      sessionUpdate
+    };
+  };
+
+  const followUpResponse = buildSessionFollowUpResponse(normalized, session, config);
+
+  if (followUpResponse) {
+    return finalize(followUpResponse);
+  }
+
   const requestedModule = detectRequestedModule(normalized);
 
   if (requestedModule && !config.allowedModules[requestedModule]) {
-    return moduleDisabledResponse(config.supportContactName);
+    return finalize(moduleDisabledResponse(config.supportContactName));
   }
 
   const printerResponse = buildPrinterHelpResponse(normalized, config.supportContactName);
 
   if (printerResponse) {
-    return applyPolicyAndFilter(printerResponse, config);
+    return finalize(printerResponse);
   }
 
   const callByNameResponse = buildCallByNameResponse(normalized, config);
 
   if (callByNameResponse) {
-    return applyPolicyAndFilter(callByNameResponse, config);
+    return finalize(callByNameResponse);
   }
 
   const websiteShortcutResponse = buildWebsiteShortcutResponse(normalized, config);
 
   if (websiteShortcutResponse) {
-    return applyPolicyAndFilter(websiteShortcutResponse, config);
+    return finalize(websiteShortcutResponse);
   }
 
   const scenario = scenarios.find((candidate) => candidate.matches(normalized));
@@ -643,5 +917,5 @@ export const runMockAssistant = (
       }
     : fallbackResponse(config.supportContactName);
 
-  return applyPolicyAndFilter(response, config);
+  return finalize(response);
 };

@@ -30,6 +30,7 @@ Current implementation includes:
 - Family contacts now support direct email, message, and call shortcuts with safe fallbacks
 - Top-bar weather now shows live conditions by configured 5-digit ZIP code
 - Bridge assistant now runs through a pluggable adapter (mock today, OpenClaw-ready later)
+- Assistant now keeps session memory per `sessionId` for follow-up commands like "open it" and "call them"
 
 ## Project Structure
 

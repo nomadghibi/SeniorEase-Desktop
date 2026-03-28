@@ -1,27 +1,29 @@
 import type {
-  AssistantCommandRequest,
-  AssistantCommandResponse
+  AssistantExecutionResult,
+  AssistantSessionSnapshot,
+  AssistantCommandRequest
 } from '../types/assistant.js';
 import type { AppConfig } from '../types/config.js';
 import { runMockAssistant } from './mockAssistant.js';
 
 type AssistantExecutionContext = {
   config: AppConfig;
+  session: AssistantSessionSnapshot | null;
 };
 
 export interface AssistantAdapter {
   execute(
     request: AssistantCommandRequest,
     context: AssistantExecutionContext
-  ): Promise<AssistantCommandResponse> | AssistantCommandResponse;
+  ): Promise<AssistantExecutionResult> | AssistantExecutionResult;
 }
 
 class MockAssistantAdapter implements AssistantAdapter {
   execute(
     request: AssistantCommandRequest,
     context: AssistantExecutionContext
-  ): AssistantCommandResponse {
-    return runMockAssistant(request, context.config);
+  ): AssistantExecutionResult {
+    return runMockAssistant(request, context.config, context.session);
   }
 }
 
