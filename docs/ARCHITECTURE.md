@@ -22,6 +22,7 @@
 - Added a config-driven admin PIN gate for opening Settings.
 - Added a global safety-mode banner and strict-mode blocking for direct unknown web entry.
 - Replaced email placeholder with guided inbox/read/reply flow including suspicious-email warning states.
+- Family contact actions now route into core modules and respect module visibility policies.
 - Assistant behavior remains mocked and policy-limited.
 
 ## Phase 3 (Planned)

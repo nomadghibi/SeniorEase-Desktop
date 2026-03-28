@@ -17,6 +17,7 @@ Current implementation includes:
 - Config export/import and reset-to-default workflows for repeatable support setups
 - Global safety mode banner and strict-mode Internet guardrail behavior
 - Email module upgraded with inbox workflow, suspicious warnings, and confirmation-based actions
+- Family module quick actions now route to Email/Video Call/Photos with policy-aware guidance
 
 ## Project Structure
 
