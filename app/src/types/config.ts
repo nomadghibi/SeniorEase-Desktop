@@ -27,8 +27,14 @@ export type WebGuardrails = {
 export type AssistantSettings = {
   anythingLlmUrl: string;
   anythingLlmCommandPath: string;
-  anythingLlmApiKey: string;
+  anythingLlmApiKeyConfigured: boolean;
+  anythingLlmApiKeyMasked: string;
 };
+
+export type AssistantSettingsPatch = Pick<
+  AssistantSettings,
+  'anythingLlmUrl' | 'anythingLlmCommandPath'
+>;
 
 export type AppConfig = {
   reminders: Reminder[];
@@ -55,10 +61,13 @@ export type AppConfig = {
 };
 
 export type AppConfigPatch = Partial<
-  Omit<AppConfig, 'updatedAt' | 'allowedModules' | 'adminPinConfigured' | 'webGuardrails'>
+  Omit<
+    AppConfig,
+    'updatedAt' | 'allowedModules' | 'adminPinConfigured' | 'webGuardrails' | 'assistantSettings'
+  >
 > & {
   adminPin?: string;
   allowedModules?: Partial<AppConfig['allowedModules']>;
   webGuardrails?: Partial<AppConfig['webGuardrails']>;
-  assistantSettings?: Partial<AppConfig['assistantSettings']>;
+  assistantSettings?: Partial<AssistantSettingsPatch>;
 };

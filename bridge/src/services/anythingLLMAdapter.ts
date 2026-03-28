@@ -203,13 +203,12 @@ const resolveRuntimeOptions = (
 ): ResolvedRuntimeOptions => {
   const configUrl = config.assistantSettings.anythingLlmUrl.trim();
   const configPath = config.assistantSettings.anythingLlmCommandPath.trim();
-  const configApiKey = config.assistantSettings.anythingLlmApiKey.trim();
 
   return {
     baseUrl: configUrl.length > 0 ? configUrl : defaults.baseUrl,
     path: configPath.length > 0 ? configPath : defaults.path,
     timeoutMs: defaults.timeoutMs,
-    apiKey: configApiKey.length > 0 ? configApiKey : defaults.apiKey
+    apiKey: defaults.apiKey
   };
 };
 

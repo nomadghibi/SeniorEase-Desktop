@@ -223,8 +223,7 @@ const SettingsScreen = () => {
       webGuardrails,
       assistantSettings: {
         anythingLlmUrl: trimmedAnythingLlmUrl,
-        anythingLlmCommandPath: trimmedCommandPath,
-        anythingLlmApiKey: assistantSettings.anythingLlmApiKey.trim()
+        anythingLlmCommandPath: trimmedCommandPath
       },
       requireAdminPin,
       allowedModules: {
@@ -353,7 +352,15 @@ const SettingsScreen = () => {
       patch.webGuardrails = raw.webGuardrails as AppConfigPatch['webGuardrails'];
     }
     if (raw.assistantSettings && typeof raw.assistantSettings === 'object') {
-      patch.assistantSettings = raw.assistantSettings as AppConfigPatch['assistantSettings'];
+      const assistantSettingsRaw = raw.assistantSettings as Record<string, unknown>;
+      patch.assistantSettings = {
+        ...(typeof assistantSettingsRaw.anythingLlmUrl === 'string'
+          ? { anythingLlmUrl: assistantSettingsRaw.anythingLlmUrl }
+          : {}),
+        ...(typeof assistantSettingsRaw.anythingLlmCommandPath === 'string'
+          ? { anythingLlmCommandPath: assistantSettingsRaw.anythingLlmCommandPath }
+          : {})
+      };
     }
     if (typeof raw.requireAdminPin === 'boolean') {
       patch.requireAdminPin = raw.requireAdminPin;
@@ -754,7 +761,7 @@ const SettingsScreen = () => {
             Assistant Endpoint (AnythingLLM)
           </h2>
           <p className="mb-4 text-xl text-[var(--text-muted)] sm:text-2xl">
-            Set ASSISTANT_PROVIDER to <span className="font-semibold">anythingllm</span> to enable live assistant calls.
+            Bridge scripts run with <span className="font-semibold">anythingllm</span> by default.
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -792,23 +799,23 @@ const SettingsScreen = () => {
               />
             </label>
 
-            <label className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-[var(--line-soft)] bg-[#f6f8fb] px-4 py-3">
               <span className="block text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
-                API Key (optional)
+                API Key (env-only)
               </span>
-              <input
-                type="password"
-                value={assistantSettings.anythingLlmApiKey}
-                onChange={(event) =>
-                  setAssistantSettings((current) => ({
-                    ...current,
-                    anythingLlmApiKey: event.target.value
-                  }))
-                }
-                placeholder="Leave blank if your AnythingLLM endpoint does not require auth"
-                className="w-full rounded-xl border-2 border-[var(--line-soft)] px-4 py-3 text-xl text-[var(--text-strong)]"
-              />
-            </label>
+              <p className="text-lg text-[var(--text-muted)] sm:text-xl">
+                Set <span className="font-semibold">ANYTHINGLLM_API_KEY</span> in your bridge environment.
+                Keys are not stored in SeniorEase config.
+              </p>
+              <p className="text-lg text-[var(--text-strong)] sm:text-xl">
+                Status:{' '}
+                <span className="font-semibold">
+                  {assistantSettings.anythingLlmApiKeyConfigured
+                    ? `Configured (${assistantSettings.anythingLlmApiKeyMasked})`
+                    : 'Not configured'}
+                </span>
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 rounded-2xl border border-[var(--line-soft)] bg-white p-4">

@@ -47,6 +47,22 @@ const isHttpUrl = (value: string): boolean => {
   }
 };
 
+const resolveEnvAnythingLlmApiKey = (): string | null => {
+  const key = (process.env.ANYTHINGLLM_API_KEY ?? process.env.OPENCLAW_API_KEY)?.trim();
+  return key && key.length > 0 ? key : null;
+};
+
+const maskApiKey = (value: string): string => {
+  if (value.length <= 4) {
+    return '*'.repeat(value.length);
+  }
+
+  const prefix = value.slice(0, 2);
+  const suffix = value.slice(-2);
+  const hidden = '*'.repeat(Math.min(10, value.length - 4));
+  return `${prefix}${hidden}${suffix}`;
+};
+
 const hashAdminPin = (pin: string): string => {
   return createHash('sha256')
     .update(`seniorease-admin-pin:${pin}`)
@@ -156,8 +172,7 @@ const defaultStoredConfig: StoredAppConfig = {
   },
   assistantSettings: {
     anythingLlmUrl: 'http://localhost:3001',
-    anythingLlmCommandPath: '/api/v1/workspace/default/chat',
-    anythingLlmApiKey: ''
+    anythingLlmCommandPath: '/api/v1/workspace/default/chat'
   },
   requireAdminPin: true,
   adminPinHash: hashAdminPin('1234'),
@@ -184,6 +199,8 @@ const writeStoredConfig = async (config: StoredAppConfig): Promise<void> => {
 };
 
 const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
+  const envApiKey = resolveEnvAnythingLlmApiKey();
+
   return {
     reminders: stored.reminders,
     internetFavorites: stored.internetFavorites,
@@ -192,7 +209,11 @@ const toPublicConfig = (stored: StoredAppConfig): AppConfig => {
     weatherZipCode: stored.weatherZipCode,
     safetyMode: stored.safetyMode,
     webGuardrails: stored.webGuardrails,
-    assistantSettings: stored.assistantSettings,
+    assistantSettings: {
+      ...stored.assistantSettings,
+      anythingLlmApiKeyConfigured: envApiKey !== null,
+      anythingLlmApiKeyMasked: envApiKey ? maskApiKey(envApiKey) : ''
+    },
     requireAdminPin: stored.requireAdminPin,
     adminPinConfigured: stored.adminPinHash.length > 0,
     allowedModules: stored.allowedModules,
@@ -249,11 +270,7 @@ const migrateStoredConfig = (input: unknown): StoredAppConfig => {
       typeof partial.assistantSettings?.anythingLlmCommandPath === 'string' &&
       /^\/[^\s]*$/.test(partial.assistantSettings.anythingLlmCommandPath.trim())
         ? partial.assistantSettings.anythingLlmCommandPath.trim()
-        : defaultStoredConfig.assistantSettings.anythingLlmCommandPath,
-    anythingLlmApiKey:
-      typeof partial.assistantSettings?.anythingLlmApiKey === 'string'
-        ? partial.assistantSettings.anythingLlmApiKey.trim()
-        : defaultStoredConfig.assistantSettings.anythingLlmApiKey
+        : defaultStoredConfig.assistantSettings.anythingLlmCommandPath
   };
 
   return {
@@ -295,9 +312,14 @@ const getStoredConfig = async (): Promise<StoredAppConfig> => {
   try {
     const raw = await readFile(configFilePath, 'utf-8');
     const parsed = JSON.parse(raw);
+    const rawHasLegacyApiKey =
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof (parsed as { assistantSettings?: { anythingLlmApiKey?: unknown } }).assistantSettings
+        ?.anythingLlmApiKey === 'string';
     const validated = storedAppConfigSchema.safeParse(parsed);
 
-    if (validated.success) {
+    if (validated.success && !rawHasLegacyApiKey) {
       return validated.data;
     }
 

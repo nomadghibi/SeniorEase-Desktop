@@ -52,7 +52,8 @@ const defaultConfig: AppConfig = {
   assistantSettings: {
     anythingLlmUrl: 'http://localhost:3001',
     anythingLlmCommandPath: '/api/v1/workspace/default/chat',
-    anythingLlmApiKey: ''
+    anythingLlmApiKeyConfigured: false,
+    anythingLlmApiKeyMasked: ''
   },
   requireAdminPin: true,
   adminPinConfigured: true,

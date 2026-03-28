@@ -28,15 +28,15 @@ AnythingLLM integration is intentionally staged after launcher and bridge contra
 ## API Endpoints and Runtime Toggles
 - Bridge contract remains stable: `POST /assistant/command`
 - Bridge adapter env vars (canonical):
-  - `ASSISTANT_PROVIDER=mock|anythingllm` (default `mock`)
+  - `ASSISTANT_PROVIDER=mock|anythingllm` (bridge scripts default to `anythingllm`)
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
   - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)
-  - `ANYTHINGLLM_API_KEY` (optional, recommended for secured deployments)
+  - `ANYTHINGLLM_API_KEY` (optional, recommended for secured deployments; env-only)
   - `ANYTHINGLLM_TIMEOUT_MS` (optional, default `7000`)
   - `ANYTHINGLLM_MAX_FAILURES` (optional, default `3`)
   - `ANYTHINGLLM_COOLDOWN_MS` (optional, default `120000`)
 - Legacy OpenClaw env vars are still accepted as compatibility aliases during migration.
-- Admin Settings can persist URL/path/API key per installation and override env defaults at runtime.
+- Admin Settings persists URL/path per installation and shows masked API-key status from env.
 
 ## Workspace and Agent Strategy
 - Use one AnythingLLM workspace per household profile by default.

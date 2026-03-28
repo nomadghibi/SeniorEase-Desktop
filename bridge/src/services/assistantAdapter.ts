@@ -176,8 +176,7 @@ const createAssistantAdapter = (): AssistantAdapter => {
 
     return new ResilientAssistantAdapter('anythingllm', anythingLlmAdapter, {
       maxFailures,
-      cooldownMs,
-      initialError: baseUrl ? null : 'ANYTHINGLLM_URL missing in env (Settings value may still be used)'
+      cooldownMs
     });
   }
 

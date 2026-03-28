@@ -49,7 +49,7 @@ Current implementation includes:
 ```txt
 seniorease-desktop/
 |- app/        # Electron + React desktop launcher
-|- bridge/     # Local Node/Express assistant bridge (mock)
+|- bridge/     # Local Node/Express assistant bridge (policy + adapter)
 |- docs/       # Product and architecture docs
 ```
 
@@ -65,16 +65,25 @@ npm --prefix app install
 npm --prefix bridge install
 ```
 
-4. Start both bridge + desktop app together:
+4. Make sure Docker Desktop is running (required for local AnythingLLM container).
+
+5. Start full local stack (AnythingLLM + bridge + desktop app):
 
 ```powershell
 npm run dev
 ```
 
 Services started:
+- AnythingLLM: `http://localhost:3001`
 - Bridge API: `http://localhost:8787`
 - Vite renderer: `http://localhost:5173`
 - Electron window: opens automatically in fullscreen
+
+Fallback if you do not want auto-container startup:
+
+```powershell
+npm run dev:desktop
+```
 
 ## Helpful Commands
 
@@ -138,16 +147,16 @@ Sample config update payload:
 
 ## Notes
 
-- AnythingLLM is still not integrated live; this phase uses a mock bridge response layer.
-- Assistant provider defaults to `mock` (set `ASSISTANT_PROVIDER=anythingllm` to enable adapter path).
+- Bridge dev/start scripts now run with `ASSISTANT_PROVIDER=anythingllm` by default.
 - AnythingLLM adapter env vars:
   - `ANYTHINGLLM_URL` (required when provider is `anythingllm`)
   - `ANYTHINGLLM_COMMAND_PATH` (optional, default `/api/v1/workspace/default/chat`)
-  - `ANYTHINGLLM_API_KEY` (optional)
+  - `ANYTHINGLLM_API_KEY` (optional, env-only)
   - `ANYTHINGLLM_TIMEOUT_MS` (optional, default `7000`)
   - `ANYTHINGLLM_MAX_FAILURES` (optional, default `3`)
   - `ANYTHINGLLM_COOLDOWN_MS` (optional, default `120000`)
 - Legacy `OPENCLAW_*` env vars are still accepted as compatibility aliases.
-- Admin Settings now includes assistant endpoint fields (`AnythingLLM URL`, `command path`, `API key`) that can override env defaults.
+- Admin Settings includes assistant endpoint fields (`AnythingLLM URL`, `command path`) and masked API-key status.
+- API keys are not stored in config JSON; set them through bridge environment variables.
 - High-risk actions are not automated and are represented as caution/blocked flows.
 - Voice actions remain placeholder-only in this phase.

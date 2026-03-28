@@ -49,10 +49,14 @@ const anythingLlmCommandPathSchema = z
   .trim()
   .regex(/^\/[^\s]*$/, 'AnythingLLM command path must start with "/" and contain no spaces.');
 
-export const assistantSettingsSchema = z.object({
+export const storedAssistantSettingsSchema = z.object({
   anythingLlmUrl: anythingLlmUrlSchema,
-  anythingLlmCommandPath: anythingLlmCommandPathSchema,
-  anythingLlmApiKey: z.string().trim().max(2048)
+  anythingLlmCommandPath: anythingLlmCommandPathSchema
+});
+
+export const assistantSettingsSchema = storedAssistantSettingsSchema.extend({
+  anythingLlmApiKeyConfigured: z.boolean(),
+  anythingLlmApiKeyMasked: z.string()
 });
 
 export const storedAppConfigSchema = z.object({
@@ -63,7 +67,7 @@ export const storedAppConfigSchema = z.object({
   weatherZipCode: z.string().regex(/^\d{5}$/),
   safetyMode: z.enum(['standard', 'strict']),
   webGuardrails: webGuardrailsSchema,
-  assistantSettings: assistantSettingsSchema,
+  assistantSettings: storedAssistantSettingsSchema,
   requireAdminPin: z.boolean(),
   adminPinHash: z.string().min(32),
   allowedModules: moduleVisibilitySchema,
@@ -95,7 +99,7 @@ export const appConfigPatchSchema = z
     safetyMode: z.enum(['standard', 'strict']).optional(),
     webGuardrails: webGuardrailsSchema.partial().optional(),
     assistantSettings:
-      assistantSettingsSchema
+      storedAssistantSettingsSchema
         .partial()
         .extend({
           anythingLlmUrl: anythingLlmUrlSchema.optional(),
